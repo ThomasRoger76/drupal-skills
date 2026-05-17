@@ -1,6 +1,6 @@
 ---
 name: drupal-obsidian
-description: Use when mapping a Drupal 10/11 project architecture into an Obsidian vault for living documentation: extracting Content Types, Paragraphs, Fields, Views, Migrations, Workflows, and SDC Components from config/sync YAML into linked Markdown notes with Dataview queries for architecture audits, dependency graphs, and coverage reports. Includes Python extraction script, vault structure, wikilinks mapping, and graphify integration for interactive knowledge graphs.
+description: "Use when mapping a Drupal 10/11 project architecture into an Obsidian vault for living documentation: extracting Content Types, Paragraphs, Fields, Views, Migrations, Workflows, and SDC Components from config/sync YAML into linked Markdown notes with Dataview queries for architecture audits, dependency graphs, and coverage reports. Includes Python extraction script, vault structure, wikilinks mapping, and graphify integration for interactive knowledge graphs."
 ---
 
 # Drupal → Obsidian Architecture Mapping
