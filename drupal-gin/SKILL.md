@@ -71,7 +71,6 @@ Gin (contrib) :
 | Gin non exporté en config | `drush cex` → committer `gin.settings.yml` | Config différente entre environnements |
 | Gin + Adminimal simultanément | Un seul thème admin actif | Conflits CSS |
 | Garder Claro sur D10/D11 | Migrer vers Gin (sidebar nav, ergonomie éditoriale, dark mode) | Gin est devenu le standard agence |
-| CSS admin dans le thème frontend | Sous-thème Gin dédié avec son propre CSS | Styles admin parasitent le frontend |
 
 ## Évolution par Version Majeure
 
@@ -81,7 +80,7 @@ Gin (contrib) :
 | Gin Navigation (sidebar) | contrib | ✅ core-like | ✅ |
 | Gin Login | contrib | contrib | contrib |
 | Mode sombre | ✅ | ✅ | ✅ |
-| D11 support | ❌ | ⚠️ alpha | ✅ |
+| D11 support day-1 | ✅ | ✅ | ✅ |
 
 ## Auto-Amélioration
 

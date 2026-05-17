@@ -93,7 +93,6 @@ Référentiel complet du SEO Drupal 8-11+ : Metatag (meta tags, Open Graph, Twit
 - `drupal-content-modeling` — Schema.org par type de contenu, champs SEO
 - `drupal-config` — Export/import config Metatag, Pathauto patterns
 - `drupal-migration` — Préserver les alias URL et redirections lors des migrations
-- `drupal-multilingual` — hreflang détaillé, URL par langue
 
 ---
 
