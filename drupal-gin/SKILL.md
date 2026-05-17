@@ -67,7 +67,7 @@ Gin (contrib) :
 | **Gin + Paragraphs — afficher les champs para dans la sidebar** | `hook_form_node_TYPE_edit_form_alter()` → `$form['field_paragraphs']['#group'] = 'meta'` | [gin-subtheme.md](gin-subtheme.md) |
 | **Gin + field_group — onglets / accordéons dans les formulaires** | Module `field_group` ≥ 3.4 compatible Gin — layout `tabs`, `accordion`, `fieldset` | [gin-subtheme.md](gin-subtheme.md) |
 | **Gin + CKEditor 5 — toolbar placement optimisé** | Gin positionne CKEditor 5 en pleine largeur natif — aucune config spéciale | [gin-setup.md](gin-setup.md) |
-| **Gin + Views admin — exposed filters au style Gin** | Module `gin_exposed_form_block` — les filtres exposés apparaissent en sidebar Gin | [gin-navigation.md](gin-navigation.md) |
+| **Gin + Views admin — filtres exposés dans un bloc séparé** | `hook_views_exposed_form_alter()` + `gin_sidebar` region ou module `drupal/better_exposed_filters` | [gin-navigation.md](gin-navigation.md) |
 | **Désactiver les animations Gin (accessibilité)** | `@media (prefers-reduced-motion: reduce)` dans le sous-thème CSS | [gin-subtheme.md](gin-subtheme.md) |
 | **Override favicon dans l'administration** | `gin.settings.yml` → `favicon.use_default: false` + chemin custom | [gin-setup.md](gin-setup.md) |
 | **Masquer des items de navigation pour certains rôles** | `hook_toolbar_alter()` + vérification `$current_user->hasPermission()` | [gin-navigation.md](gin-navigation.md) |

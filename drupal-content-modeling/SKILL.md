@@ -53,7 +53,7 @@ Guide de référence pour les décisions d'architecture de contenu Drupal 8-11+ 
 | Cloner un nœud / une entité | `drupal/entity_clone` — duplication via UI ou programmatique | [nodes-content-types.md](nodes-content-types.md) |
 | **Workflow complexe multi-étapes (ECA)** | `drupal/eca` — Event-Condition-Action sans code, remplace Rules en D10/D11 | [nodes-content-types.md](nodes-content-types.md) |
 | **Archiver du contenu après X jours automatiquement** | `drupal/eca` + Timer event → transition vers état `archived` | [nodes-content-types.md](nodes-content-types.md) |
-| **Indexer un contenu custom dans Search API** | `@SearchApiDatasource` plugin → expose l'entité custom au moteur de recherche | [custom-entities.md](custom-entities.md) |
+| **Indexer une custom entity dans Search API** | ContentEntity → automatiquement détectée par Search API. Pour une source non-Entity : implémenter `@SearchApiDatasource` plugin | [custom-entities.md](custom-entities.md) |
 | **Révisions avec diff visuel (avant/après)** | `drupal/diff` — affiche les changements entre deux révisions | [nodes-content-types.md](nodes-content-types.md) |
 | **Versionner le contenu comme du code (git-like)** | Content Moderation + Revisions + `drupal/workspaces` (staging en DB) | [nodes-content-types.md](nodes-content-types.md) |
 | **Multi-step content approval workflow** | Content Moderation → états custom (draft → in_review → approved → published) | [nodes-content-types.md](nodes-content-types.md) |

@@ -49,7 +49,7 @@ Traitement massif, avec progression (migration, rebuild index)
 | Rebuild du cache d'entités large | Batch API | [batch-api.md](batch-api.md) |
 | Nettoyer les vieux logs watchdog | `hook_cron()` avec `time() - 604800` | [cron-management.md](cron-management.md) |
 | **Monitorer la taille des queues en production** | `drush queue:list` dans un script cron + alerte si items > seuil | [queue-workers.md](queue-workers.md) |
-| **Queue avec backend Redis (haute performance)** | `drupal/redis` + `settings.php` → `'default_backend' => 'redis'` | [queue-workers.md](queue-workers.md) |
+| **Queue avec backend Redis (haute performance)** | `settings.php` → `$settings['queue_service_QUEUE_NAME'] = 'queue.reliable_queue'` + `drupal/redis` pour le cache associé | [queue-workers.md](queue-workers.md) |
 | **Priorité entre plusieurs queues** | Exécuter d'abord la queue critique : `drush queue:run critique && drush queue:run secondaire` | [queue-workers.md](queue-workers.md) |
 | **Cron par module avec timing précis** | Ultimate Cron → créer un job `hook_cron()` avec `rules.crontab: '*/5 * * * *'` | [cron-management.md](cron-management.md) |
 | **Rejouer les items en erreur** | `RequeueException` → remet l'item en queue avec backoff exponentiel | [queue-workers.md](queue-workers.md) |

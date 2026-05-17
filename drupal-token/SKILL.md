@@ -47,7 +47,7 @@ Référentiel complet du module Token Drupal 8-11+ : tokens natifs (node, user, 
 | **Cacher le résultat d'un token lent** | `cache.default` dans `hook_tokens()` avec cache tag de l'entité | [custom-tokens.md](custom-tokens.md) |
 | Lister tous les tokens disponibles (UI) | `/admin/help/token` — Token Tree navigable par type | [token-basics.md](token-basics.md) |
 | Token avec fallback si vide | `[node:summary\|[node:title]]` (pipe = fallback) | [token-basics.md](token-basics.md) |
-| **Token dans un YAML de migration (process plugin)** | `plugin: token` → `token: '[node:field_categorie:entity:name]'` + `data: {node: @entity}` | [tokens-in-modules.md](tokens-in-modules.md) |
+| **Token dans un YAML de migration (via callback)** | `plugin: callback` + `callable: 'token_replace'` OU custom process plugin appelant `\Drupal::token()->replace()` | [tokens-in-modules.md](tokens-in-modules.md) |
 | **Token dans ECA / Rules (automatisation)** | Token context injecté automatiquement selon l'entité déclencheur | [tokens-in-modules.md](tokens-in-modules.md) |
 | **Token lazy — évaluation différée pour perfs** | `$token_service->replace($text, $data, ['langcode' => $langcode, 'callback' => NULL])` | [custom-tokens.md](custom-tokens.md) |
 | **Token sur un champ multilingue** | Injecter `['langcode' => $langcode]` dans le contexte `token->replace()` | [custom-tokens.md](custom-tokens.md) |
