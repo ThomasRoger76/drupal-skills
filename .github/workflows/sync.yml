@@ -1,0 +1,64 @@
+name: Sync skills from individual repos
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # chaque nuit à 3h UTC
+  workflow_dispatch:        # déclenchement manuel possible
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync all skill repos
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          SKILLS=(
+            drupal-api drupal-composer drupal-config drupal-content-modeling
+            drupal-core drupal-cron-queue drupal-deployment drupal-docker
+            drupal-email drupal-gin drupal-media drupal-migration
+            drupal-multilingual drupal-obsidian drupal-performance drupal-sdc
+            drupal-search drupal-security drupal-seo drupal-testing
+            drupal-theming drupal-token drupal-views drupal-webform
+          )
+
+          CHANGED=0
+
+          for skill in "${SKILLS[@]}"; do
+            echo "→ Syncing $skill..."
+            tmp=$(mktemp -d)
+            git clone --depth 1 "https://github.com/ThomasRoger76/${skill}.git" "$tmp" --quiet
+
+            # Supprimer l'ancien contenu du skill (hors .git)
+            rm -rf "${skill}"
+            mkdir -p "${skill}"
+
+            # Copier les nouveaux fichiers (sans .git)
+            rsync -a --exclude='.git' "$tmp/" "${skill}/"
+            rm -rf "$tmp"
+
+            if git diff --quiet HEAD -- "${skill}/"; then
+              echo "  ↷ $skill — aucun changement"
+            else
+              git add "${skill}/"
+              echo "  ✓ $skill — mis à jour"
+              CHANGED=1
+            fi
+          done
+
+          if [ "$CHANGED" -eq 1 ]; then
+            git commit -m "chore: sync skills from individual repos [$(date -u +%Y-%m-%d)]"
+            git push
+            echo "✅ Monorepo mis à jour"
+          else
+            echo "✅ Tout est déjà à jour"
+          fi
