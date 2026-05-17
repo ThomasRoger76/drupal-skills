@@ -61,6 +61,45 @@ Gin (contrib) :
 | **Gin Login — brander la page de connexion** | `composer require drupal/gin_login` + config logo | [gin-setup.md](gin-setup.md) |
 | Gin sidebar vs condensed vs horizontal | Gin settings → Toolbar → Layout options | [gin-navigation.md](gin-navigation.md) |
 | Breadcrumbs custom dans la navigation Gin | `BreadcrumbBuilder` service avec priority 100 | [gin-navigation.md](gin-navigation.md) |
+| **Référence complète CSS Variables Gin** | `--gin-color-primary`, `--gin-color-button`, `--gin-bg-header`, `--gin-font-family` | [gin-subtheme.md](gin-subtheme.md) |
+| **Forcer le mode sombre par défaut** | `gin.settings.yml` → `preset: dark` + `classic_toolbar: false` | [gin-setup.md](gin-setup.md) |
+| **Gin + Content Moderation (badge d'état dans le formulaire)** | Compatible natif — les états apparaissent dans le panneau meta Gin | [gin-subtheme.md](gin-subtheme.md) |
+| **Gin + Paragraphs — afficher les champs para dans la sidebar** | `hook_form_node_TYPE_edit_form_alter()` → `$form['field_paragraphs']['#group'] = 'meta'` | [gin-subtheme.md](gin-subtheme.md) |
+| **Gin + field_group — onglets / accordéons dans les formulaires** | Module `field_group` ≥ 3.4 compatible Gin — layout `tabs`, `accordion`, `fieldset` | [gin-subtheme.md](gin-subtheme.md) |
+| **Gin + CKEditor 5 — toolbar placement optimisé** | Gin positionne CKEditor 5 en pleine largeur natif — aucune config spéciale | [gin-setup.md](gin-setup.md) |
+| **Gin + Views admin — exposed filters au style Gin** | Module `gin_exposed_form_block` — les filtres exposés apparaissent en sidebar Gin | [gin-navigation.md](gin-navigation.md) |
+| **Désactiver les animations Gin (accessibilité)** | `@media (prefers-reduced-motion: reduce)` dans le sous-thème CSS | [gin-subtheme.md](gin-subtheme.md) |
+| **Override favicon dans l'administration** | `gin.settings.yml` → `favicon.use_default: false` + chemin custom | [gin-setup.md](gin-setup.md) |
+| **Masquer des items de navigation pour certains rôles** | `hook_toolbar_alter()` + vérification `$current_user->hasPermission()` | [gin-navigation.md](gin-navigation.md) |
+| **Migrer de Claro → Gin** | `drush config:set system.theme admin gin` + exporter gin.settings.yml + créer sous-thème | [gin-setup.md](gin-setup.md) |
+| **Migrer d'Adminimal → Gin** | Désinstaller adminimal, installer gin + gin_toolbar, vérifier les surcharges CSS custom | [gin-setup.md](gin-setup.md) |
+| **Gin + sélecteur de langue dans la navigation** | Module `language` → bloc `language_block` positionné dans toolbar Gin | [gin-navigation.md](gin-navigation.md) |
+| **Personnaliser la couleur du header admin par environnement** | `$config['gin.settings']['preset']` dans `settings.local.php` → rouge en prod, bleu en staging | [gin-setup.md](gin-setup.md) |
+
+## Migration vers Gin
+
+### Depuis Claro (recommandé D10/D11)
+```bash
+composer require drupal/gin drupal/gin_toolbar drupal/gin_login
+drush config:set system.theme admin gin
+drush config:set system.theme login gin_login  # optionnel
+drush cr
+drush cex  # committer gin.settings.yml
+```
+
+### Depuis Seven / Adminimal (D9+)
+1. Désinstaller l'ancien thème : `drush theme:uninstall seven`
+2. Supprimer les surcharges CSS dans `settings.php` (`ADMINIMAL_*` variables)
+3. Installer Gin + créer un sous-thème pour les customisations
+4. Inspecter `hook_form_alter` qui ciblaient `.adminimal-*` — renommer en `.gin-*`
+5. Vérifier que `field_group` est ≥ 3.4 (compatibilité Gin requise)
+
+### Checklist post-migration
+- [ ] Exporter `gin.settings.yml` et le committer
+- [ ] Créer un sous-thème Gin pour les customisations CSS (ne jamais modifier Gin directement)
+- [ ] Tester le formulaire d'édition des content types principaux
+- [ ] Vérifier que les views admin s'affichent correctement
+- [ ] Tester le Layout Builder si activé
 
 ## Anti-Patterns Critiques
 
@@ -71,6 +110,8 @@ Gin (contrib) :
 | Gin non exporté en config | `drush cex` → committer `gin.settings.yml` | Config différente entre environnements |
 | Gin + Adminimal simultanément | Un seul thème admin actif | Conflits CSS |
 | Garder Claro sur D10/D11 | Migrer vers Gin (sidebar nav, ergonomie éditoriale, dark mode) | Gin est devenu le standard agence |
+| Charger les assets frontend dans le sous-thème Gin | Librairies admin uniquement dans le sous-thème Gin, assets frontend dans le thème front | Assets frontend en double sur toutes les pages admin |
+| `gin.settings.yml` géré uniquement en DB | Toujours exporter et committer `gin.settings.yml` | Config différente en prod → expérience admin inconsistante |
 
 ## Évolution par Version Majeure
 
@@ -89,6 +130,8 @@ Gin (contrib) :
 
 ## See Also
 
-- `drupal-theming` — Base themes, .info.yml, CSS/JS libraries
+- `drupal-theming` — Base themes, .info.yml, CSS/JS libraries, BEM, build pipeline
 - `drupal-config` — Export/import config Gin (gin.settings.yml)
-- `drupal-content-modeling` — Mise en page des formulaires d'édition
+- `drupal-content-modeling` — Mise en page des formulaires d'édition, field_group, Layout Builder
+- `drupal-core` — `hook_toolbar_alter()`, `hook_form_alter()`, BreadcrumbBuilder
+- `drupal-deployment` — Environnements différents, couleur header par environnement (`settings.local.php`)

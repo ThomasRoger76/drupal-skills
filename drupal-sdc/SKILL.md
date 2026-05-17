@@ -43,6 +43,15 @@ Référentiel complet des Single Directory Components Drupal 10.3+/D11 : structu
 | **JS Drupal.behaviors dans un SDC** | `Drupal.behaviors.monComposant = { attach: (context) => { once(...) } }` | [sdc-setup.md](sdc-setup.md) |
 | Props objet imbriqué (image avec alt + url) | `props: { image: { type: object, properties: { url, alt } } }` | [sdc-setup.md](sdc-setup.md) |
 | Slot facultatif avec valeur par défaut Twig | `{% if slots.footer is defined %}...{% else %}...{% endif %}` | [sdc-integration.md](sdc-integration.md) |
+| **Migrer un template Twig existant vers SDC** | Créer le répertoire, déplacer le `.twig`, créer `.component.yml` avec les variables comme props | [sdc-setup.md](sdc-setup.md) |
+| **SDC avec variantes (primary / secondary / ghost)** | Prop `variant` de type `string` + `enum: [primary, secondary, ghost]` + class conditionnelle Twig | [sdc-setup.md](sdc-setup.md) |
+| **Passer une render array Drupal comme slot** | `{{ slots.content }}` dans le twig — les render arrays sont gérés automatiquement | [sdc-integration.md](sdc-integration.md) |
+| **SDC depuis un template preprocess (PHP)** | `$variables['#type'] = 'component'; $variables['#component'] = 'mon_theme:card';` | [sdc-integration.md](sdc-integration.md) |
+| **Partager des SDC entre un module et un thème** | Module : `web/modules/custom/mon_module/components/` → accessible partout | [sdc-integration.md](sdc-integration.md) |
+| **CSS scopé avec :host (isolation)** | `mon-composant.css` — les sélecteurs sont scopés au shadow root du composant | [sdc-setup.md](sdc-setup.md) |
+| **Storybook + Controls (props configurables)** | `argTypes: { variant: { control: 'select', options: ['primary','secondary'] } }` | [sdc-storybook.md](sdc-storybook.md) |
+| **Tester un SDC (PHPUnit)** | `KernelTestBase` + `ComponentValidator::validate()` ou assert HTML dans Functional | [sdc-setup.md](sdc-setup.md) |
+| **SDC en production — désactiver la validation des props** | `services.yml` → `sdc.debug: false` (activé uniquement en dev) | [sdc-setup.md](sdc-setup.md) |
 
 ## Anatomie d'un Composant SDC
 

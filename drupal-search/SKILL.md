@@ -59,6 +59,14 @@ Référentiel complet de Search API Drupal 8-11+ : configuration des indexes, ba
 | Highlighting des termes recherchés | Solr → Excerpt processor (HTML avec balises <em>) | [solr-integration.md](solr-integration.md) |
 | Recherche phonétique (soundex, metaphone) | Solr — phonetic field type dans schema | [solr-integration.md](solr-integration.md) |
 | Search API sans Views (API PHP) | `Index::query()` + `QueryInterface` | [custom-processors.md](custom-processors.md) |
+| **OpenSearch / AWS Opensearch backend** | `drupal/search_api_opensearch` — API compatible Elasticsearch | [elasticsearch.md](elasticsearch.md) |
+| **Tolérance aux fautes de frappe (fuzzy search)** | Solr — `lowercaseFilter` + `phonetic` OU `edgeNGram` tokenizer | [solr-integration.md](solr-integration.md) |
+| **Tracking des requêtes de recherche** | `drupal/search_api_stats` — logs et rapports des termes recherchés | [search-api-setup.md](search-api-setup.md) |
+| **Recherche "did you mean" (suggestions)** | Solr SpellCheck component + `SearchApiSolrSpellcheckQuery` | [solr-integration.md](solr-integration.md) |
+| **Synonymes dans la recherche** | Solr synonym.txt dans la config du schema | [solr-integration.md](solr-integration.md) |
+| **Réindexer automatiquement après mise à jour** | `drupal/search_api_solr` → Index automatique via Queue Worker à la sauvegarde d'entité | [search-api-setup.md](search-api-setup.md) |
+| **Filtrer les résultats par permissions Drupal** | Search API Processor `Content Access` — obligatoire sur tout site avec accès restreint | [search-api-setup.md](search-api-setup.md) |
+| **Search API avec filtres géographiques (geosearch)** | `drupal/geofield` + Search API champ `geofield` + Solr RPT handler | [custom-processors.md](custom-processors.md) |
 
 ## Anti-Patterns Critiques
 

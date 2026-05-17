@@ -52,6 +52,13 @@ Référentiel complet de Drupal Views 8-11+ : configuration UI, plugin system (h
 | Afficher les Paragraphs d'un nœud dans Views | Relationship + field handler SDC | [views-paragraphs.md](views-paragraphs.md) |
 | View dont la source = paragraphes (pas nœuds) | Source : Paragraphs + relation nœud parent | [views-paragraphs.md](views-paragraphs.md) |
 | Filtrer les nœuds par contenu d'un paragraphe | JOIN + filter sur paragraphs_item_field_data | [views-paragraphs.md](views-paragraphs.md) |
+| **Actions en masse sur les résultats (bulk operations)** | Module `drupal/views_bulk_operations` — VBO actions configurables | [views-fundamentals.md](views-fundamentals.md) |
+| **Export CSV/Excel de la View** | Module `drupal/views_data_export` — display "Data export" dans la View | [views-rest-export.md](views-rest-export.md) |
+| **View avec infinite scroll / load more AJAX** | Module `drupal/views_infinite_scroll` — pager personnalisé | [views-ajax.md](views-ajax.md) |
+| **View avec sticky header (tableau fixe)** | Module `drupal/datatables` ou CSS `position: sticky` sur le header Twig | [views-templates.md](views-templates.md) |
+| **View avec relation Entity Reference multiple niveaux** | Relationship → Relationship → champ cible (3 niveaux max avant N+1) | [views-fundamentals.md](views-fundamentals.md) |
+| **Exclure les doublons dans une View** | Query settings → "Distinct" + vérification de la pertinence avec DISTINCT SQL | [views-fundamentals.md](views-fundamentals.md) |
+| **View avec tri par champ calculé / score** | Custom SortHandler + `hook_views_query_alter()` → `ORDER BY formule` | [custom-handlers.md](custom-handlers.md) |
 
 ## Anti-Patterns Critiques
 

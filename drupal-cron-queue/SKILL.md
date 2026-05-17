@@ -48,6 +48,14 @@ Traitement massif, avec progression (migration, rebuild index)
 | Importer un CSV de 10 000 lignes | Batch API — chunk de 50 lignes | [batch-api.md](batch-api.md) |
 | Rebuild du cache d'entités large | Batch API | [batch-api.md](batch-api.md) |
 | Nettoyer les vieux logs watchdog | `hook_cron()` avec `time() - 604800` | [cron-management.md](cron-management.md) |
+| **Monitorer la taille des queues en production** | `drush queue:list` dans un script cron + alerte si items > seuil | [queue-workers.md](queue-workers.md) |
+| **Queue avec backend Redis (haute performance)** | `drupal/redis` + `settings.php` → `'default_backend' => 'redis'` | [queue-workers.md](queue-workers.md) |
+| **Priorité entre plusieurs queues** | Exécuter d'abord la queue critique : `drush queue:run critique && drush queue:run secondaire` | [queue-workers.md](queue-workers.md) |
+| **Cron par module avec timing précis** | Ultimate Cron → créer un job `hook_cron()` avec `rules.crontab: '*/5 * * * *'` | [cron-management.md](cron-management.md) |
+| **Rejouer les items en erreur** | `RequeueException` → remet l'item en queue avec backoff exponentiel | [queue-workers.md](queue-workers.md) |
+| **Queue items avec expiration (TTL)** | Stocker `created` dans le payload + vérifier `time() - $item->created < 3600` dans `processItem()` | [queue-workers.md](queue-workers.md) |
+| **Batch dans un QueueWorker (chunk de 100)** | `processItem()` qui crée un sous-batch de 100 items max | [batch-api.md](batch-api.md) |
+| **Tracer les items traités / en erreur** | Logger dans watchdog + `drush watchdog:show --type=mon_queue` | [queue-workers.md](queue-workers.md) |
 
 ## Anti-Patterns Critiques
 

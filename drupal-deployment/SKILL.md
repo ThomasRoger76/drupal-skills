@@ -51,6 +51,14 @@ La commande commune à TOUT déploiement Drupal :
 | Déployer sur Pantheon | `terminus env:deploy` | [acquia-pantheon.md](acquia-pantheon.md) |
 | Déployer sur Acquia | `acli push:artifact` | [acquia-pantheon.md](acquia-pantheon.md) |
 | Déployer sur Kubernetes | `kubectl apply + drush deploy` | [acquia-pantheon.md](acquia-pantheon.md) |
+| **Feature flags pour déploiements graduels** | `drupal/feature_toggle` ou `settings.php` → `$settings['ma_feature'] = getenv('FEATURE_ON')` | [zero-downtime.md](zero-downtime.md) |
+| **Drush aliases — cible des environnements** | `drush @prod sql:dump`, `drush @prod site:alias` | [cicd-pipelines.md](cicd-pipelines.md) |
+| **Synchro DB prod → local automatique** | `drush sql:sync @prod @self --structure-tables-key=common` | [zero-downtime.md](zero-downtime.md) |
+| **Synchro fichiers prod → local** | `drush rsync @prod:%files @self:%files` | [zero-downtime.md](zero-downtime.md) |
+| **Post-deploy check automatique** | `drush core:requirements --severity=2 --format=json` → exit 1 si critique | [zero-downtime.md](zero-downtime.md) |
+| **Blue-green deployment (zéro downtime avancé)** | Deux slots (A/B) + load balancer bascule sur le slot stable | [zero-downtime.md](zero-downtime.md) |
+| **Notifier Slack après déploiement réussi** | `curl -X POST $SLACK_WEBHOOK -d '{"text":"✅ Deploy prod OK"}' ` dans la CI | [cicd-pipelines.md](cicd-pipelines.md) |
+| **Protéger les branches git (main/master)** | GitLab → Settings → Repository → Protected branches + required CI pass | [cicd-pipelines.md](cicd-pipelines.md) |
 
 ## Anti-Patterns Critiques
 

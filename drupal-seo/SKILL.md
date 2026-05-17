@@ -49,6 +49,36 @@ Référentiel complet du SEO Drupal 8-11+ : Metatag (meta tags, Open Graph, Twit
 | **Analytics : Matomo (auto-hébergé)** | `drupal/matomo` — sans tiers, RGPD natif | [analytics.md](analytics.md) |
 | **Cookie consent RGPD** | `drupal/tarte_au_citron` (FR) ou `drupal/cookieyes` | [analytics.md](analytics.md) |
 | Bloquer analytics avant consentement | Tarte au Citron → services Google/Matomo gérés | [analytics.md](analytics.md) |
+| **Core Web Vitals : LCP > 2.5s** | BigPipe + images lazy loading + `fetchpriority="high"` sur hero image | [sitemap.md](sitemap.md) |
+| **Core Web Vitals : CLS (layout shift)** | Dimensions `width`/`height` sur toutes les images, `font-display: swap` | [sitemap.md](sitemap.md) |
+| **Core Web Vitals : INP > 200ms** | Réduire JS bloquant, `once()` correct, différer les scripts non critiques | [sitemap.md](sitemap.md) |
+| **Liens internes contextuels dans CKEditor** | Module `drupal/linkit` — autocomplete vers les entités Drupal dans l'éditeur | [pathauto.md](pathauto.md) |
+| **Nommage des fichiers image pour le SEO** | Pathauto sur les file entities, ou convention `[site:name]-[node:title]-[file:fid].webp` | [pathauto.md](pathauto.md) |
+| **Alt text obligatoire sur toutes les images** | Champ `alt` requis sur Image fields + audit via `drupal/editoria11y` | [metatag.md](metatag.md) |
+| **Rich Result : FAQ (Google Questions/Réponses)** | Schema.org `FAQPage` + `Question` + `AcceptedAnswer` via JSON-LD | [structured-data.md](structured-data.md) |
+| **Rich Result : HowTo (étapes avec images)** | Schema.org `HowTo` + `HowToStep` via `hook_page_attachments` | [structured-data.md](structured-data.md) |
+| **Rich Result : BreadcrumbList** | Schema.org `BreadcrumbList` auto via Metatag ou `hook_page_attachments` | [structured-data.md](structured-data.md) |
+| **Valider les données structurées** | Google Rich Results Test + schema.org/validator après chaque déploiement | [structured-data.md](structured-data.md) |
+| **Chaînes de redirections (301→301→301)** | Audit avec Screaming Frog ou `drupal/redirect` → résoudre en redirection directe | [redirects.md](redirects.md) |
+| **Redirections après migration D7→D10** | `drupal/redirect_import` + CSV des anciennes URLs + `drush pathauto:aliases-generate` | [redirects.md](redirects.md) |
+| **Sitemap index pour sites > 50 000 pages** | Simple Sitemap → sitemaps multiples découpés par type de contenu + langue | [sitemap.md](sitemap.md) |
+| **Optimisation pour les moteurs IA (GEO)** | `llms.txt` à la racine + Schema.org `Organization` avec `description` riche | [structured-data.md](structured-data.md) |
+| **noindex sur les pages non canoniques** | `/search`, `/user/*`, `/admin/*` → Metatag robots `noindex` par défaut | [metatag.md](metatag.md) |
+
+## Core Web Vitals — Signaux SEO Google
+
+Les CWV sont des **facteurs de classement Google** depuis mai 2021. Seuils cibles :
+
+| Signal | Bon | À améliorer | Mauvais |
+|--------|-----|-------------|---------|
+| LCP (Largest Contentful Paint) | < 2.5s | 2.5–4.0s | > 4.0s |
+| INP (Interaction to Next Paint) | < 200ms | 200–500ms | > 500ms |
+| CLS (Cumulative Layout Shift) | < 0.1 | 0.1–0.25 | > 0.25 |
+
+**Solutions Drupal :**
+- **LCP** : BigPipe, lazy loading sur images off-screen, `fetchpriority="high"` sur le hero, WebP natif D10+
+- **INP** : `once()` pour les behaviors JS, éviter `jQuery(document).ready` en D10+, débounce sur les exposed filters Views
+- **CLS** : Définir `width`/`height` sur les `<img>`, réserver l'espace pour les iframes oEmbed, `font-display: swap` dans les webfonts
 
 ## Anti-Patterns Critiques
 
@@ -64,6 +94,10 @@ Référentiel complet du SEO Drupal 8-11+ : Metatag (meta tags, Open Graph, Twit
 | Schema.org JSON-LD non validé | Tester sur schema.org/validator | Rich snippets non activés |
 | Canonical absent sur les pages paginées | Canonical self-referencing sur chaque page | Duplicate content pénalité |
 | `drush pathauto:aliases-generate` jamais lancé | Planifier en cron ou après import | Centaines de node/42 non résolus |
+| Core Web Vitals ignorés | LCP + INP + CLS sont des signaux de classement Google | Pénalité de positionnement invisible |
+| `llms.txt` absent sur les sites à fort contenu éditorial | Créer `/llms.txt` avec la structure du site pour les crawlers IA | Contenu non cité par ChatGPT/Perplexity |
+| Chaînes de redirections > 2 sauts | Toujours rediriger vers l'URL finale en un seul 301 | Perte de PageRank + lenteur de crawl |
+| Alt text générique ("image1.jpg", "photo") | Descriptif, avec mots-clés pertinents ≤ 125 caractères | Perte de trafic Google Images + accessibilité |
 
 ## Évolution par Version Majeure
 

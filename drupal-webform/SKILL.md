@@ -47,6 +47,14 @@ Référentiel complet du module Webform Drupal 8-11+ : éléments de formulaire 
 | **Anti-spam : Honeypot (invisible)** | Module `honeypot` + Webform settings → Spam protection | [webform-access.md](webform-access.md) |
 | **Anti-spam : CAPTCHA invisible** | Module `recaptcha` (v2 invisible ou v3) + Webform element | [webform-access.md](webform-access.md) |
 | Anti-spam : taux de soumission (rate limiting) | Module `webform_spam_control` ou `flood` core | [webform-access.md](webform-access.md) |
+| **Élément calculé (valeur dépend d'autres champs)** | Webform element `computed_twig` — `{{ data.prenom }} {{ data.nom }}` | [webform-elements.md](webform-elements.md) |
+| **Afficher les soumissions Webform dans une View** | `drupal/webform_views` — expose les soumissions comme source Views | [webform-submissions.md](webform-submissions.md) |
+| **Modifier le comportement du formulaire selon l'URL** | `[current-page:query:source]` token + default value conditionnel | [webform-elements.md](webform-elements.md) |
+| **Envoyer un PDF de confirmation** | Handler Email + pièce jointe générée avec `drupal/webform_entity_print` | [webform-handlers.md](webform-handlers.md) |
+| **Formulaire attaché à un nœud (1 form par article)** | Webform field sur le Content Type → une instance par nœud | [webform-api.md](webform-api.md) |
+| **Handler conditionnel (envoyer email seulement si type=X)** | Webform Handler → Conditions tab → `data[type] = 'pro'` | [webform-handlers.md](webform-handlers.md) |
+| **Déboguer une validation échouée** | `drush webform:submission:export WEBFORM_ID --format=table` + vérifier les errors | [webform-submissions.md](webform-submissions.md) |
+| **Webform accessible (WCAG 2.1 AA)** | Labels explicites, `aria-describedby` sur les descriptions, gestion du focus en multi-step | [webform-elements.md](webform-elements.md) |
 
 ## Anti-Patterns Critiques
 

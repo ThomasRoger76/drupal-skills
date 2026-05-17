@@ -60,6 +60,12 @@ Référentiel complet de Drupal en mode API-first / headless 8-11+ : JSON:API (c
 | Endpoint REST custom avec logique métier | `RestResource` plugin custom | [cors-webhooks.md](cors-webhooks.md) |
 | JSON:API pour contenu multilingue | `?filter[langcode]=fr` + `drupal-langcode` header | [jsonapi-deep.md](jsonapi-deep.md) |
 | Performances JSON:API (cache) | `X-Drupal-Cache-Tags` headers + Varnish | [jsonapi-deep.md](jsonapi-deep.md) |
+| **Rate limiting sur les endpoints JSON:API** | `drupal/rate_limiter` ou nginx `limit_req_zone` devant Drupal | [cors-webhooks.md](cors-webhooks.md) |
+| **Exposer des Custom Entities via JSON:API** | Activer JSON:API sur le type dans `/admin/config/services/jsonapi` + permissions | [jsonapi-deep.md](jsonapi-deep.md) |
+| **API versioning sans casser les consumers** | JSON:API Extras — aliaser `/jsonapi/node/article` en `/api/v1/articles` | [jsonapi-deep.md](jsonapi-deep.md) |
+| **Webhook avec validation de signature HMAC** | `hash_hmac('sha256', $payload, $secret)` → vérifier le header `X-Hub-Signature-256` | [cors-webhooks.md](cors-webhooks.md) |
+| **JSON:API + Decoupled Router (alias URL vers entité)** | `drupal/decoupled_router` → `GET /router/translate-path?path=/mon-alias` | [nextjs-drupal.md](nextjs-drupal.md) |
+| **Pagination cursor-based (grands volumes)** | `?page[cursor]=TOKEN` avec `drupal/jsonapi_cursor_paginator` | [jsonapi-deep.md](jsonapi-deep.md) |
 
 ## Anti-Patterns Critiques
 

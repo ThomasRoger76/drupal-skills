@@ -44,6 +44,14 @@ Référentiel complet du système Media Drupal 8-11+ (core depuis D8.6) : Media 
 | **Recadrage manuel par le rédacteur** | `drupal/image_widget_crop` — crop zones configurables | [media-library.md](media-library.md) |
 | **Images SVG nativement dans Drupal** | `drupal/svg_image` — render les SVG inline ou via `<img>` | [media-types.md](media-types.md) |
 | Téléchargement de média avec bouton | `drupal/media_entity_download` — ajoute un lien download | [media-library.md](media-library.md) |
+| **Stockage S3 / cloud (AWS, OVH, Scaleway)** | `drupal/s3fs` — remplace `public://` et `private://` par un bucket S3-compatible | [media-types.md](media-types.md) |
+| **Conversion automatique WebP à l'upload** | Image Styles D10+ — ajouter un `Convert` effect → WebP | [media-library.md](media-library.md) |
+| **Lazy loading natif sur les images Media** | `drupal/blazy` ou attribut HTML `loading="lazy"` dans le template media | [media-library.md](media-library.md) |
+| **IPTC/EXIF metadata extraction à l'upload** | `drupal/exif_orientation` + `drupal/media_read_iptc` | [media-types.md](media-types.md) |
+| **Watermark automatique sur les images** | Image Style + effect `Watermark` via `drupal/imagick` | [media-library.md](media-library.md) |
+| **Optimisation taille fichier avant stockage** | `drupal/imageapi_optimize` + mozjpeg/optipng binaries | [media-library.md](media-library.md) |
+| **Media en relation Many-to-Many entre nœuds** | Entity Reference field sur le Media bundle lui-même (bidirectionnel) | [media-programmatic.md](media-programmatic.md) |
+| **Empêcher la suppression d'un média utilisé** | `hook_entity_predelete()` + `media_entity` service → `isUsed()` | [media-access.md](media-access.md) |
 
 ## Différences File vs Image vs Media
 

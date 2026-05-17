@@ -47,6 +47,13 @@ Référentiel complet du module Token Drupal 8-11+ : tokens natifs (node, user, 
 | **Cacher le résultat d'un token lent** | `cache.default` dans `hook_tokens()` avec cache tag de l'entité | [custom-tokens.md](custom-tokens.md) |
 | Lister tous les tokens disponibles (UI) | `/admin/help/token` — Token Tree navigable par type | [token-basics.md](token-basics.md) |
 | Token avec fallback si vide | `[node:summary\|[node:title]]` (pipe = fallback) | [token-basics.md](token-basics.md) |
+| **Token dans un YAML de migration (process plugin)** | `plugin: token` → `token: '[node:field_categorie:entity:name]'` + `data: {node: @entity}` | [tokens-in-modules.md](tokens-in-modules.md) |
+| **Token dans ECA / Rules (automatisation)** | Token context injecté automatiquement selon l'entité déclencheur | [tokens-in-modules.md](tokens-in-modules.md) |
+| **Token lazy — évaluation différée pour perfs** | `$token_service->replace($text, $data, ['langcode' => $langcode, 'callback' => NULL])` | [custom-tokens.md](custom-tokens.md) |
+| **Token sur un champ multilingue** | Injecter `['langcode' => $langcode]` dans le contexte `token->replace()` | [custom-tokens.md](custom-tokens.md) |
+| **Token de plusieurs types dans un seul module** | `hook_token_info()` retourne plusieurs entrées dans `types` et `tokens` | [custom-tokens.md](custom-tokens.md) |
+| **Token sécurisé (jamais de HTML brut)** | `Xss::filter()` ou `Html::escape()` sur la valeur retournée dans `hook_tokens()` | [custom-tokens.md](custom-tokens.md) |
+| **Token dans les notifications email automatiques** | Handlers Symfony Mailer + `token->replace($subject, ['node' => $node])` | [tokens-in-modules.md](tokens-in-modules.md) |
 
 ## Anti-Patterns Critiques
 

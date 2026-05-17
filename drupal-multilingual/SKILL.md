@@ -63,6 +63,13 @@ Référentiel complet du multilinguisme Drupal 8-11+ : pile de modules multiling
 | Alias URL par langue (/fr/mon-article) | Pathauto + Language module | [multilingual-setup.md](multilingual-setup.md) |
 | Générer une URL dans une langue spécifique | `Url::fromRoute(..., [], ['language' => $language])` | [content-translation.md](content-translation.md) |
 | Langue fallback si traduction manquante | Language Fallback dans Content Language config | [multilingual-setup.md](multilingual-setup.md) |
+| **`drush locale:import` — màj sans écraser les traductions custom** | `--override=none` (1er import) vs `--override=all` (mise à jour — remplace tout) | [interface-translation.md](interface-translation.md) |
+| **Détecter la langue depuis l'IP (geolocation)** | Language Negotiation → `drupal/language_cookie` ou `drupal/geoip_language` | [language-negotiation.md](language-negotiation.md) |
+| **Tester la langue courante dans un préprocess** | `$language = \Drupal::service('language_manager')->getCurrentLanguage()->getId()` | [content-translation.md](content-translation.md) |
+| **Cache multilingual — contexte manquant** | Toujours `#cache['contexts'][] = 'languages:language_interface'` sur les render arrays avec texte traduit | [multilingual-setup.md](multilingual-setup.md) |
+| **Importer du contenu traduit en masse** | Migrate API — `destination.translations: true` dans le YAML migrate | [content-translation.md](content-translation.md) |
+| **Views — n'afficher que le contenu traduit dans la langue courante** | Views → Filters → "Translation Language" → "Current user's language" (pas l'original) | [multilingual-views.md](multilingual-views.md) |
+| **Language Switcher bloc avec flag images** | Module `drupal/languageicons` ou CSS background-image sur `.language-link` | [multilingual-setup.md](multilingual-setup.md) |
 
 ## Anti-Patterns Critiques
 

@@ -54,6 +54,13 @@ Symfony Mailer (drupal/symfony_mailer) :
 | Configurer DMARC (politique compliance) | DNS TXT `_dmarc.mon-site.com` | [email-deliverability.md](email-deliverability.md) |
 | Tester le score de délivrabilité | mail-tester.com, MX Toolbox | [email-deliverability.md](email-deliverability.md) |
 | Gérer les bounces (emails invalides) | Return-Path + API provider SMTP | [email-deliverability.md](email-deliverability.md) |
+| **Envoyer des emails en masse sans timeout** | Queue API + 1 email = 1 queue item + `QueueWorker` qui appelle `EmailFactory` | [symfony-mailer-setup.md](symfony-mailer-setup.md) |
+| **Logger tous les emails envoyés** | EventSubscriber sur `MailerEvent::MESSAGE_SENT` → watchdog avec To + Subject | [email-testing.md](email-testing.md) |
+| **Preview email dans l'UI admin** | Symfony Mailer → Settings → Policies → Preview button | [email-testing.md](email-testing.md) |
+| **Email avec pièce jointe programmatique** | `$email->attachFromPath('/path/to/file.pdf', 'invoice.pdf')` | [symfony-mailer-setup.md](symfony-mailer-setup.md) |
+| **Email inline image (logo dans le template)** | `$email->embed(File::fromPath($logo_path), 'logo')` → `<img src="{{ logo }}"` | [email-templates.md](email-templates.md) |
+| **Compatibilité D8 — hook_mail legacy** | Symfony Mailer compatibility bridge — active automatiquement les anciens hook_mail | [symfony-mailer-setup.md](symfony-mailer-setup.md) |
+| **Tester le score de délivrabilité avant go-live** | mail-tester.com — envoyer un email test et obtenir un score 10/10 | [email-deliverability.md](email-deliverability.md) |
 
 ## Anti-Patterns Critiques
 

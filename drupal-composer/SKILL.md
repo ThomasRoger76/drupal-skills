@@ -41,6 +41,14 @@ Référentiel complet de la gestion des dépendances Drupal avec Composer 2 : st
 | Cache Composer dans Docker | Volume `~/.composer` monté | [deployment.md](deployment.md) |
 | Diagnostiquer lenteur Composer | `COMPOSER_PROCESS_TIMEOUT=600` | [troubleshooting.md](troubleshooting.md) |
 | Créer un plugin Composer custom | `type: composer-plugin` dans composer.json | [composer-basics.md](composer-basics.md) |
+| **Voir tous les packages à mettre à jour** | `composer outdated --direct` — liste uniquement les dépendances directes | [version-constraints.md](version-constraints.md) |
+| **Automatiser les mises à jour de sécurité** | `drupal/automatic_updates` (core D11) ou Renovate Bot (GitHub/GitLab) | [security.md](security.md) |
+| **Gérer un package custom interne comme contrib** | Dépôt Git privé + `"type": "drupal-module"` dans son `composer.json` | [private-repos.md](private-repos.md) |
+| **Monorepo — plusieurs modules custom dans un seul repo** | `repositories.path` type + wildcard `"./packages/*"` | [private-repos.md](private-repos.md) |
+| **Résoudre "Your requirements could not be resolved"** | `composer why-not` + `composer diagnose` + ajuster contraintes | [troubleshooting.md](troubleshooting.md) |
+| **Composer normalize (tri cohérent du composer.json)** | `composer-normalize` plugin — `composer normalize` | [composer-basics.md](composer-basics.md) |
+| **Vérifier l'intégrité du vendor après déploiement** | `composer check-platform-reqs` | [deployment.md](deployment.md) |
+| **Rollback d'un package après update cassé** | `composer require drupal/MODULE:^VERSION_PRÉCÉDENTE` + `composer.lock` git checkout | [troubleshooting.md](troubleshooting.md) |
 
 ## Anti-Patterns Critiques
 

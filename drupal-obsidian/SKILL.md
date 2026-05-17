@@ -9,6 +9,16 @@ description: "Use when mapping a Drupal 10/11 project architecture into an Obsid
 
 Ce skill transforme la configuration Drupal (`config/sync/*.yml`) en un **vault Obsidian vivant** : chaque Content Type, Paragraph, champ, template Twig et hook devient une note liée. Le résultat est une cartographie de l'architecture explorable en Graph View et requêtable avec Dataview — puis transformable en graphe interactif via le skill `graphify`.
 
+## Pourquoi un Vault Drupal ?
+
+Un projet Drupal de taille moyenne contient 50-200 entités (Content Types, Paragraphs, Views, Workflows, Migrations) réparties dans des centaines de fichiers YAML dans `config/sync/`. La documentation manuelle devient obsolète dès le sprint suivant. Ce skill résout ce problème en **générant automatiquement une documentation vivante** depuis la source de vérité : `config/sync/*.yml`.
+
+**Ce que le vault permet qu'un wiki manuel ne peut pas :**
+- Graph View : voir instantanément quels modules dépendent de quel champ
+- Dataview : auditer les paragraphes sans template Twig en une requête
+- Auto-update en CI/CD : la doc est toujours synchronisée avec le code
+- `git diff` sur les notes : savoir ce qui a changé entre deux sprints
+
 ## La Chaîne Complète
 
 ```
@@ -54,6 +64,12 @@ HTML Knowledge Graph interactif + Rapport d'audit
 | Mettre à jour le vault en CI/CD | Script Python + `.gitlab-ci.yml` | [vault-structure.md](vault-structure.md) |
 | Comparer architecture avant/après sprint | `git diff` sur les notes | [vault-structure.md](vault-structure.md) |
 | Intégrer les notes Obsidian dans GitLab Wiki | Script Python → export Markdown GitLab | [vault-structure.md](vault-structure.md) |
+| **CI/CD — regénérer le vault automatiquement** | `.gitlab-ci.yml` → `python3 scripts/extraction.py --config-dir config/sync --output-dir vault/` | [vault-structure.md](vault-structure.md) |
+| **Workflow équipe — vault partagé via Git** | Vault dans un sous-dossier git du projet Drupal + `.gitignore` pour `/.obsidian/workspace.json` | [vault-structure.md](vault-structure.md) |
+| **Comparer l'architecture entre deux branches** | `git diff main feature/refacto -- vault/` → noter les entités ajoutées/supprimées | [vault-structure.md](vault-structure.md) |
+| **Dashboard sprint — contenu non traduit** | Dataview → `type = "content_type" AND NOT file.inlinks.some(...)` | [dataview-queries.md](dataview-queries.md) |
+| **Audit des champs sans formatters définis** | Dataview JS → `type: "field_instance"` sans `#formatter` tag | [dataview-queries.md](dataview-queries.md) |
+| **Rapport des migrations orphelines** | Dataview → `type: "migration"` sans lien vers un Content Type destination | [dataview-queries.md](dataview-queries.md) |
 
 ### Templates de Notes
 
