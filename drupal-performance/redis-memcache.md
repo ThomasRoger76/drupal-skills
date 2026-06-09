@@ -80,8 +80,10 @@ $settings['redis.connection']['password'] = getenv('REDIS_PASSWORD') ?: '';
 
 // Préfixe pour distinguer plusieurs sites sur le même Redis
 $settings['redis.connection']['prefix'] = 'drupal_monsite_';
-// OU utiliser le hash du site
-$settings['cache_prefix']['default'] = getenv('APP_ENV', 'prod') . '_';
+// OU dériver le préfixe de l'environnement.
+// ⚠️ getenv() PHP ne prend PAS de valeur par défaut en 2e argument (contrairement à
+//    la fonction env() de Symfony/Laravel) — utiliser l'opérateur ?: à la place.
+$settings['cache_prefix']['default'] = (getenv('APP_ENV') ?: 'prod') . '_';
 
 // 5. Configuration avancée du module Redis
 // Options de sérialisation (via services.yml ou paramètres de connexion)

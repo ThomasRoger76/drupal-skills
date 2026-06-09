@@ -64,7 +64,8 @@
     {% for item in items %}
       <li{{ item.attributes.addClass(item.is_expanded ? 'menu__item--expanded' : '') }}>
         <a href="{{ item.url }}"
-           {% if item.is_currentPage %}aria-current="page"{% endif %}
+           {# in_active_trail = page courante ou ancêtre dans le menu (variable réelle du menu Drupal) #}
+           {% if item.in_active_trail %}aria-current="page"{% endif %}
            {% if item.below %}
              aria-expanded="{{ item.in_active_trail ? 'true' : 'false' }}"
              aria-haspopup="true"

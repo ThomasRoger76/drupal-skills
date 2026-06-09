@@ -62,6 +62,25 @@ Après chaque problème SEO découvert :
 - **Correct :** `date('c', $node->getCreatedTime())` pour les dates (ISO 8601). Valider sur schema.org/validator
 - **Prévention :** Toujours valider le JSON-LD sur https://validator.schema.org/ après implémentation
 
+### 2026-06-09 — JSON-LD obsolète servi depuis le cache — rich snippet périmé
+
+- **Symptôme :** Après édition d'un article, le Google Rich Results Test continue d'afficher l'ancien titre/date dans le JSON-LD pendant des heures.
+- **Cause :** Le `hook_page_attachments()` construit le JSON-LD depuis le nœud mais ne propage pas le cache tag `node:ID`. Le Dynamic Page Cache sert le balisage figé.
+- **Correct :** Ajouter `$page['#cache']['tags'][] = 'node:' . $node->id();` (et `url.path` pour le breadcrumb).
+- **Prévention :** Toute donnée structurée dérivée d'une entité doit propager les cache tags de cette entité. Vérifier avec `drush cr` puis re-test.
+
+---
+
+## Corrections de cohérence du skill (2026-06-09)
+
+- **Nom de hook erroné** : `hook_simple_sitemap_links_alter_all` → `hook_simple_sitemap_links_alter` (sitemap.md).
+- **Libellé Pathauto inexact** : option d'« Update action » réelle = « Create a new alias. Delete the old alias and create a redirect. » (pathauto.md + redirects.md, qui mentionnait par erreur « Webform → Settings »).
+- **Token OG/Media** : `…:entity:file:url` ne fonctionne qu'avec un champ Image (File). Pour un champ Media : `…:entity:field_media_image:entity:url`. metatag.md aligné sur la leçon « OG image absente ».
+- **Lien mort** : `agents/seo-audit.md` n'existe pas — remplacé par renvoi vers le skill générique `seo-audit`.
+- **Renvois CWV** : pointaient à tort vers `sitemap.md` (qui ne traite pas les Core Web Vitals) → renvoi vers le skill `drupal-performance`.
+
+---
+
 ### 2026-05-16 — Pathauto translitération désactivée — accents dans les URLs
 
 - **Symptôme :** URL générée : `/articles/léçon-de-drupal` (avec caractères spéciaux) → 404 sur certains serveurs

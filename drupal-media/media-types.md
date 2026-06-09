@@ -128,21 +128,24 @@ translatable: true    # ← Traduit par langue si site multilingue
 // src/Plugin/media/Source/MonApiMedia.php
 namespace Drupal\mon_module\Plugin\media\Source;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\media\Attribute\MediaSource;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaSourceBase;
-use Drupal\media\MediaTypeInterface;
 
 /**
  * Source Media pour une API externe.
  *
- * @MediaSource(
- *   id = "mon_api_media",
- *   label = @Translation("Mon API"),
- *   description = @Translation("Médias hébergés sur notre API externe."),
- *   allowed_field_types = {"string"},
- *   default_thumbnail_filename = "generic.png"
- * )
+ * D11 : attribut PHP #[MediaSource] (l'annotation @MediaSource est dépréciée
+ * et supprimée en D12). Disponible depuis D10.2.
  */
+#[MediaSource(
+  id: 'mon_api_media',
+  label: new TranslatableMarkup('Mon API'),
+  description: new TranslatableMarkup('Médias hébergés sur notre API externe.'),
+  allowed_field_types: ['string'],
+  default_thumbnail_filename: 'generic.png',
+)]
 class MonApiMedia extends MediaSourceBase {
 
   /**

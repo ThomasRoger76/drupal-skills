@@ -108,8 +108,9 @@ curl https://mon-site.com/sitemap.xml | head -30
 // Exclure des entités spécifiques du sitemap
 // Via l'UI : éditer le nœud → "Simple Sitemap" section → décocher
 
-// Via code (hook ou event subscriber)
-function mon_module_simple_sitemap_links_alter_all(array &$links, $sitemap_variant): void {
+// Via code — hook_simple_sitemap_links_alter() (nom exact, sans suffixe _all)
+// $sitemap est l'objet SimpleSitemap (variant) en cours de génération.
+function mon_module_simple_sitemap_links_alter(array &$links, $sitemap): void {
   // Exclure les pages de test
   $links = array_filter($links, function ($link) {
     return !str_contains($link['url'], '/test/');

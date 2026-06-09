@@ -429,8 +429,8 @@ validate:phpcs:
   before_script:
     - composer install --no-progress --prefer-dist --optimize-autoloader
   script:
-    - docker compose exec php vendor/bin/phpcs
-      # ou directement dans le container CI :
+    # En CI, le job tourne DÉJÀ dans le container PHP — appeler vendor/bin directement
+    # (pas de `docker compose exec`, qui sert uniquement en local)
     - vendor/bin/phpcs --standard=Drupal web/modules/custom
   allow_failure: false
   artifacts:
@@ -741,7 +741,8 @@ test:mutation:
     - composer install --no-progress --prefer-dist --optimize-autoloader
     - cp phpunit.xml.dist phpunit.xml
   script:
-    - docker compose exec php vendor/bin/infection
+    # Job CI déjà dans le container PHP — appel direct de vendor/bin
+    - vendor/bin/infection
         --min-msi=60
         --threads=4
         --no-progress

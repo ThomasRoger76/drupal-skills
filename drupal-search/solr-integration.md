@@ -50,11 +50,11 @@ drush sapi-solr:gsc mon_index /tmp/solr-config/
 # 4. Copier les fichiers de config dans le core Solr
 docker compose cp /tmp/solr-config/. solr:/opt/solr/server/solr/drupal/conf/
 
-# 5. Recharger le core Solr
-curl http://localhost:8983/solr/admin/cores?action=RELOAD&core=drupal
+# 5. Recharger le core Solr (quoter l'URL — sinon le shell interprète & comme un job)
+curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=drupal"
 
 # 6. Vérifier le core
-curl http://localhost:8983/solr/drupal/select?q=*:*&rows=0
+curl "http://localhost:8983/solr/drupal/select?q=*:*&rows=0"
 ```
 
 ### Structure des fichiers de config Solr générés
@@ -151,7 +151,7 @@ processor_settings:
     processor_id: highlight
     weights:
       postprocess_query: 0
-      preprocress_index: 0
+      preprocess_index: 0
     settings:
       prefix: '<strong>'   # Balise ouvrante pour le highlight
       suffix: '</strong>'  # Balise fermante

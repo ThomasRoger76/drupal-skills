@@ -53,8 +53,13 @@ parameters:
     maxAge: 3600           # Cache de la preflight (OPTIONS) en secondes
     supportsCredentials: true   # Requis pour les cookies de session
 
-# Après modification → drush cr obligatoire
+# Après modification → drush cr obligatoire (docker compose exec php drush cr)
 ```
+
+> **CORS par environnement.** Ne jamais committer `localhost`/`*` pour la prod. Garder une whitelist
+> stricte par environnement : surcharger `$config['cors.config']['allowedOrigins']` dans `settings.php`
+> via `getenv('CORS_ALLOWED_ORIGINS')`, ou ajouter les origins de dev uniquement dans
+> `settings.local.php` (non commité). Voir [authentication.md](authentication.md#configuration-cors-pour-le-frontend).
 
 **Vérifier CORS :**
 ```bash
@@ -169,13 +174,16 @@ class ContenuWebhookSubscriber implements EventSubscriberInterface {
 // QueueWorker pour les webhooks — retry si le frontend est down
 // src/Plugin/QueueWorker/WebhookQueueWorker.php
 
-/**
- * @QueueWorker(
- *   id = "mon_module_webhooks",
- *   title = @Translation("Webhooks sortants"),
- *   cron = {"time" = 30}
- * )
- */
+use Drupal\Core\Annotation\Translation;
+use Drupal\Core\Queue\Attribute\QueueWorker;
+use Drupal\Core\Queue\QueueWorkerBase;
+
+// D11 : attribut PHP (#[QueueWorker]) — l'annotation @QueueWorker est dépréciée.
+#[QueueWorker(
+  id: 'mon_module_webhooks',
+  title: new Translation('Webhooks sortants'),
+  cron: ['time' => 30],
+)]
 class WebhookQueueWorker extends QueueWorkerBase {
   public function processItem($data): void {
     $this->httpClient->post($data['url'], [
@@ -207,22 +215,27 @@ private function queueWebhook(string $event, array $data): void {
 // src/Plugin/rest/resource/StatistiquesResource.php
 namespace Drupal\mon_module\Plugin\rest\resource;
 
+use Drupal\Core\Annotation\Translation;
+use Drupal\rest\Attribute\RestResource;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Drupal\Core\Session\AccountProxyInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Endpoint REST pour les statistiques du site.
  *
- * @RestResource(
- *   id = "mon_module_statistiques",
- *   label = @Translation("Statistiques"),
- *   uri_paths = {
- *     "canonical" = "/api/v1/stats",
- *     "create" = "/api/v1/stats"
- *   }
- * )
+ * D11 : attribut PHP (#[RestResource]) — l'annotation @RestResource est dépréciée.
+ * Versioning custom : préfixe /api/v1/ (convention API maison).
  */
+#[RestResource(
+  id: 'mon_module_statistiques',
+  label: new Translation('Statistiques'),
+  uri_paths: [
+    'canonical' => '/api/v1/stats',
+    'create' => '/api/v1/stats',
+  ],
+)]
 class StatistiquesResource extends ResourceBase {
 
   public function __construct(
@@ -258,7 +271,8 @@ class StatistiquesResource extends ResourceBase {
     $stats = [
       'articles_count' => $this->countPublishedNodes('article'),
       'users_count' => $this->countActiveUsers(),
-      'generated_at' => (new \DateTime())->format(\DateTime::ISO8601),
+      // \DateTime::ISO8601 est déprécié (non conforme RFC 3339) → utiliser ATOM.
+      'generated_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
     ];
 
     $response = new ResourceResponse($stats, 200);
@@ -293,9 +307,12 @@ class StatistiquesResource extends ResourceBase {
 }
 ```
 
+**Appeler :** `GET /api/v1/stats?_format=json` (le `_format` est obligatoire pour le module REST core,
+contrairement à JSON:API). Pour OAuth2 : ajouter `-H "Authorization: Bearer TOKEN"`.
+
 **Activer la ressource REST :**
 ```bash
-# Via l'UI : /admin/config/services/rest
+# Via l'UI : /admin/config/services/rest (nécessite drupal/restui)
 # OU via config YAML :
 
 # config/install/rest.resource.mon_module_statistiques.yml

@@ -153,13 +153,13 @@ arguments:
 
 ```bash
 # Vérifier quelle langue est détectée sur une page
-drush php:eval "
+docker compose exec php drush php:eval "
 echo 'Langue courante: ' . \Drupal::languageManager()->getCurrentLanguage()->getId() . PHP_EOL;
 echo 'Langue contenu: ' . \Drupal::languageManager()->getCurrentLanguage(\Drupal\Core\Language\LanguageInterface::TYPE_CONTENT)->getId() . PHP_EOL;
 "
 
 # Voir les résultats d'une View avec la langue comme argument
-drush php:eval "
+docker compose exec php drush php:eval "
 \$view = \Drupal\views\Views::getView('articles_multilingue');
 \$view->setDisplay('page_1');
 \$view->setArguments(['fr']);

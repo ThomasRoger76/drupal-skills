@@ -148,7 +148,7 @@ label: 'Éditeur'
 
 ```bash
 # Exporter toutes les configs (incluant les overrides de langue)
-drush cex -y
+docker compose exec php drush cex -y
 
 # Les fichiers de traduction sont dans :
 # config/sync/language/fr/*.yml
@@ -164,7 +164,7 @@ drush cex -y
 #         └── system.menu.main.yml  ← override DE
 
 # Importer
-drush cim -y
+docker compose exec php drush cim -y
 ```
 
 ---
@@ -173,7 +173,7 @@ drush cim -y
 
 ```bash
 # Lister toutes les configs qui ont des traductions
-drush php:eval "
+docker compose exec php drush php:eval "
 \$overrides = \Drupal::service('config.factory')->listAll();
 foreach (\$overrides as \$name) {
   \$fr = \Drupal::languageManager()->getLanguageConfigOverride('fr', \$name);
@@ -184,13 +184,13 @@ foreach (\$overrides as \$name) {
 " | head -20
 
 # Vérifier un override spécifique
-drush php:eval "
+docker compose exec php drush php:eval "
 \$override = \Drupal::languageManager()->getLanguageConfigOverride('fr', 'system.menu.main');
-var_dump(\$override->get());
+var_export(\$override->get());
 "
 
 # Via drush config:get avec langue
-drush php:eval "
+docker compose exec php drush php:eval "
 \$lang_mgr = \Drupal::languageManager();
 \$original = \Drupal::config('system.menu.main')->get('label');
 \$fr = \$lang_mgr->getLanguageConfigOverride('fr', 'system.menu.main')->get('label');

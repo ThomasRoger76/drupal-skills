@@ -27,8 +27,8 @@ $is_overridable = $display->isOverridable();
 ```
 
 ```bash
-# Via drush
-drush php:eval "
+# Via drush (Docker natif — jamais ddev)
+docker compose exec php drush php:eval "
 \$display = \Drupal::entityTypeManager()
   ->getStorage('entity_view_display')
   ->load('node.article.full');
@@ -165,8 +165,8 @@ Utiliser Paragraphs quand :
 ## Commandes Layout Builder
 
 ```bash
-# Vérifier si Layout Builder est actif sur un display
-drush php:eval "
+# Vérifier si Layout Builder est actif sur un display (Docker natif — jamais ddev)
+docker compose exec php drush php:eval "
 \$display = \Drupal::entityTypeManager()
   ->getStorage('entity_view_display')
   ->load('node.article.full');
@@ -175,7 +175,7 @@ echo 'Overridable: ' . (\$display->isOverridable() ? 'OUI' : 'NON') . PHP_EOL;
 "
 
 # Désactiver Layout Builder
-drush php:eval "
+docker compose exec php drush php:eval "
 \$display = \Drupal::entityTypeManager()
   ->getStorage('entity_view_display')
   ->load('node.article.full');
@@ -184,7 +184,7 @@ echo 'Désactivé.';
 "
 
 # Voir les sections d'un nœud spécifique
-drush php:eval "
+docker compose exec php drush php:eval "
 \$node = \Drupal::entityTypeManager()->getStorage('node')->load(1);
 if (\$node->hasField('layout_builder__layout')) {
   echo count(\$node->get('layout_builder__layout')->getSections()) . ' section(s)' . PHP_EOL;

@@ -48,8 +48,29 @@ Mauvaises décisions architecturales et leurs conséquences. Mis à jour après 
 - **Correct :** Nodes sont parfaits pour le contenu SEO avec URL, révisions, traduction, workflow
 - **Prévention :** Custom entity = données métier sans nécessité de frontend/SEO. Contenu = Node.
 
-### Paragraphs Behaviors — `#[ParagraphsBehavior]` non découvert en D11
+### Paragraphs Behaviors — `#[ParagraphsBehavior]` non découvert (y compris D11)
 - **Symptôme :** Le Behavior plugin n'apparaît pas dans l'interface Paragraphs
-- **Cause :** L'attribute PHP `#[ParagraphsBehavior]` n'est pas encore supporté en D10 — utiliser `@ParagraphsBehavior` annotation
-- **Correct :** Utiliser l'annotation `@ParagraphsBehavior(...)` en D9/D10, `#[ParagraphsBehavior]` en D11+
-- **Prévention :** Vérifier la version du module Paragraphs et de Drupal avant d'utiliser les attributs PHP
+- **Cause :** Conversion de l'annotation `@ParagraphsBehavior` en attribut PHP `#[ParagraphsBehavior]`. Contrairement au core Drupal, le module Paragraphs n'a PAS migré ses plugins Behavior vers les attributs — même en D11 le manager attend l'annotation.
+- **Correct :** Conserver l'annotation `@ParagraphsBehavior(...)` dans le docblock, toutes versions D8→D11.
+- **Prévention :** Ne pas généraliser « D11 = attributs PHP ». Le core supporte `#[...]` ; chaque module contrib migre à son rythme. Vérifier le PluginManager du module avant de convertir.
+
+---
+
+## 2026-06-09 — Revue qualité
+
+### Ternaire Twig sans `else` dans un tableau de classes → classe `false`
+- **Symptôme :** Une classe parasite (ou un crash `clean_class` sur un booléen) apparaît dans le `class` du paragraphe non publié.
+- **Cause :** `paragraph.isPublished() ? 'paragraph--view-mode--' ~ view_mode` injecte le booléen `false` dans le tableau quand la condition est fausse — Twig n'a pas de branche `else`.
+- **Correct :** Sortir la classe inconditionnelle, gérer l'état non publié à part, et filtrer : `[...]|filter(c => c is not empty)`.
+- **Prévention :** Dans un tableau de classes Twig, soit fournir les deux branches du ternaire, soit filtrer les valeurs vides en sortie.
+
+### Setting `text_processing` sur un champ `string` (BaseFieldDefinition)
+- **Symptôme :** Setting ignoré / confusion sur la nature du champ.
+- **Cause :** `text_processing` ne s'applique qu'aux champs texte formatés (`text`, `text_long`, `text_with_summary`), pas à `string`/`string_long`.
+- **Correct :** Pour un `string`, seul `max_length` est pertinent : `->setSetting('max_length', 64)`.
+- **Prévention :** Ne pas copier les settings d'un type de champ vers un autre. `string` = brut sans format texte.
+
+### « Contrib d'abord » : ne pas recommander un module propriétaire en première option
+- **Symptôme :** Tableau de décision suggérait `dxpr_builder` (propriétaire/payant) pour le drag-and-drop éditeur.
+- **Correct :** Recommander `layout_paragraphs` (contrib libre et mature) en première intention ; mentionner les solutions propriétaires seulement si un besoin spécifique le justifie.
+- **Prévention :** Première option = core ou contrib libre. Propriétaire = exception documentée, jamais le défaut.

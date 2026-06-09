@@ -447,7 +447,8 @@ docker compose exec php php -d pcov.enabled=1 vendor/bin/phpunit --coverage-html
 ### Configurer le rapport dans `phpunit.xml`
 
 ```xml
-<coverage>
+<!-- PHPUnit 10/11 : les fichiers couverts vont dans <source>, les rapports dans <coverage>. -->
+<source>
   <include>
     <directory>web/modules/custom/mon_module/src</directory>
   </include>
@@ -456,6 +457,9 @@ docker compose exec php php -d pcov.enabled=1 vendor/bin/phpunit --coverage-html
     <!-- Exclure les fichiers de "plumbing" non testables -->
     <file>web/modules/custom/mon_module/mon_module.module</file>
   </exclude>
+</source>
+
+<coverage>
   <report>
     <html outputDirectory="coverage/html"/>
     <clover outputFile="coverage/clover.xml"/>

@@ -222,18 +222,26 @@ drush en cdn -y
 ```
 
 ```yaml
-# config/install/cdn.settings.yml
+# config/install/cdn.settings.yml — variante 1 : un seul domaine CDN
 status: true
 mapping:
   type: simple
   domain: cdn.mon-site.com
-  # OU plusieurs domaines pour les assets
+farfuture:
+  status: false   # Far Future headers pour les assets statiques
+```
+
+```yaml
+# config/install/cdn.settings.yml — variante 2 : plusieurs domaines (sharding)
+# ⚠️ Ne PAS mélanger 'type: simple' et 'type: auto-balanced' dans le même mapping.
+status: true
+mapping:
   type: auto-balanced
   domains:
     - static1.mon-site.com
     - static2.mon-site.com
 farfuture:
-  status: false   # Far Future headers pour les assets statiques
+  status: false
 ```
 
 ### CDN Manuel (sans module)

@@ -62,8 +62,17 @@ function mon_module_token_info(): array {
 
 ## hook_tokens() — Résoudre les Valeurs
 
+> **⚠️ D8.6+ / D11 — Le 5e paramètre `BubbleableMetadata` est obligatoire.** Toute
+> valeur de token dérivée d'une entité DOIT propager ses métadonnées de cache via
+> `$bubbleable_metadata->addCacheableDependency($entity)`. Sans ça, le rendu qui
+> consomme le token (page, bloc, vue) ne sera **pas invalidé** quand l'entité change
+> → contenu périmé servi depuis le cache. C'est le bug n°1 des tokens custom.
+
 ```php
 <?php
+
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Render\BubbleableMetadata;
 
 /**
  * Implements hook_tokens().
@@ -72,8 +81,16 @@ function mon_module_token_info(): array {
  * @param array  $tokens   Tokens à résoudre : ['reference' => '[commande:reference]', ...]
  * @param array  $data     Contexte : ['commande' => $entity, 'node' => $node, ...]
  * @param array  $options  Options : ['langcode', 'callback', 'clear', 'sanitize']
+ * @param \Drupal\Core\Render\BubbleableMetadata $bubbleable_metadata
+ *   Collecteur de cache tags/contexts/max-age. OBLIGATOIRE depuis D8.6.
  */
-function mon_module_tokens(string $type, array $tokens, array $data, array $options): array {
+function mon_module_tokens(
+  string $type,
+  array $tokens,
+  array $data,
+  array $options,
+  BubbleableMetadata $bubbleable_metadata,
+): array {
   $replacements = [];
   $sanitize = $options['sanitize'] ?? TRUE;
 
@@ -84,12 +101,14 @@ function mon_module_tokens(string $type, array $tokens, array $data, array $opti
   if ($type === 'commande' && isset($data['commande'])) {
     /** @var \Drupal\mon_module\Entity\Commande $commande */
     $commande = $data['commande'];
+    // Propage les cache tags de l'entité : invalidation auto quand elle change.
+    $bubbleable_metadata->addCacheableDependency($commande);
 
     foreach ($tokens as $name => $original) {
       switch ($name) {
         case 'reference':
           $value = $commande->get('reference')->value;
-          $replacements[$original] = $sanitize ? \Drupal\Component\Utility\Html::escape($value) : $value;
+          $replacements[$original] = $sanitize ? Html::escape($value) : $value;
           break;
 
         case 'montant':
@@ -100,7 +119,11 @@ function mon_module_tokens(string $type, array $tokens, array $data, array $opti
         case 'client-nom':
           $user = $commande->get('uid')->entity;
           $nom = $user ? $user->getDisplayName() : '';
-          $replacements[$original] = $sanitize ? \Drupal\Component\Utility\Html::escape($nom) : $nom;
+          // L'affichage dépend aussi de l'utilisateur → propager sa dépendance.
+          if ($user) {
+            $bubbleable_metadata->addCacheableDependency($user);
+          }
+          $replacements[$original] = $sanitize ? Html::escape($nom) : $nom;
           break;
       }
     }
@@ -112,6 +135,7 @@ function mon_module_tokens(string $type, array $tokens, array $data, array $opti
     $node = $data['node'];
     // Utiliser la traduction courante si disponible
     $node = \Drupal::service('entity.repository')->getTranslationFromContext($node, $langcode);
+    $bubbleable_metadata->addCacheableDependency($node);
 
     foreach ($tokens as $name => $original) {
       switch ($name) {
@@ -119,7 +143,14 @@ function mon_module_tokens(string $type, array $tokens, array $data, array $opti
           // Extraire les termes de tags comme mots-clés SEO
           $tags = $node->get('field_tags')->referencedEntities();
           $keywords = array_map(fn($t) => $t->getName(), $tags);
-          $replacements[$original] = implode(', ', $keywords);
+          // Les termes influencent le résultat → propager leur cache.
+          foreach ($tags as $tag) {
+            $bubbleable_metadata->addCacheableDependency($tag);
+          }
+          // Token texte simple : neutraliser tout markup résiduel.
+          $replacements[$original] = $sanitize
+            ? Html::escape(implode(', ', $keywords))
+            : implode(', ', $keywords);
           break;
 
         case 'categorie-principale':
@@ -128,18 +159,22 @@ function mon_module_tokens(string $type, array $tokens, array $data, array $opti
           if (!$field->isEmpty()) {
             $term = $field->entity;
             if ($term) {
-              // Trouver les tokens de taxonomy_term qui chainées
+              $bubbleable_metadata->addCacheableDependency($term);
+              // Trouver les tokens de taxonomy_term chaînés ([…:categorie-principale:name])
               $chained_tokens = $token_service->findWithPrefix($tokens, $name);
               if ($chained_tokens) {
+                // generate() reçoit aussi $bubbleable_metadata pour propager le cache
+                // des sous-tokens taxonomy_term.
                 $replacements += $token_service->generate(
                   'taxonomy_term',
                   $chained_tokens,
                   ['taxonomy_term' => $term],
-                  $options
+                  $options,
+                  $bubbleable_metadata,
                 );
               }
               else {
-                $replacements[$original] = $term->getName();
+                $replacements[$original] = $sanitize ? Html::escape($term->getName()) : $term->getName();
               }
             }
           }
@@ -181,18 +216,86 @@ $text = 'Catégorie : [node:categorie-principale:name]';
 
 ---
 
-## Déclarer les Tokens dans `.module`
+## Où déclarer les hooks token
+
+Deux fichiers sont auto-chargés par le système token, sans aucun code de bootstrap :
+
+- **`mon_module.tokens.inc`** — emplacement canonique recommandé (voir `node.tokens.inc`,
+  `system.tokens.inc` dans le core). Le module charge ce `.inc` automatiquement avant
+  d'invoquer `hook_token_info()` / `hook_tokens()`. Mettre les deux hooks ici garde
+  le `.module` léger.
+- **`mon_module.module`** — possible aussi, mais à réserver aux très petits modules.
 
 ```php
-// mon_module.module — importer les fonctions token
-// hook_token_info et hook_tokens peuvent être dans le .module directement
-// OU dans un fichier .tokens.inc
+// ❌ Déprécié — ne plus utiliser
+module_load_include('inc', 'mon_module', 'mon_module.tokens');
 
-// Pour garder le .module léger :
-// mon_module.module
-function mon_module_token_info() {
-  // Déléguer à un fichier dédié si complexe
-  module_load_include('inc', 'mon_module', 'mon_module.tokens');
-  return _mon_module_token_info();
+// ✅ Si un chargement manuel est vraiment nécessaire (rarement le cas pour .tokens.inc)
+\Drupal::moduleHandler()->loadInclude('mon_module', 'inc', 'mon_module.tokens');
+```
+
+> **Ne jamais** déclarer `hook_token_info()` dans `hook_install()` : ce sont des hooks
+> de découverte, ils doivent vivre dans `.module` ou `.tokens.inc`, puis `drush cr`.
+
+---
+
+## D11 — Hooks OOP par attribut `#[Hook]`
+
+Drupal 11 permet d'implémenter les hooks token en POO via l'attribut
+`#[Hook]` (`Drupal\Core\Hook\Attribute\Hook`), dans une classe sous `src/Hook/`.
+Plus de fonctions procédurales, injection de dépendances native, testabilité.
+Le procédural reste 100 % supporté en D11 — choisir selon la convention du projet.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\mon_module\Hook;
+
+use Drupal\Core\Hook\Attribute\Hook;
+use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+
+/**
+ * Hooks token du module, version OOP (Drupal 11).
+ */
+final class TokenHooks {
+
+  use StringTranslationTrait;
+
+  #[Hook('token_info')]
+  public function tokenInfo(): array {
+    return [
+      'types' => [
+        'commande' => [
+          'name' => $this->t('Commande'),
+          'description' => $this->t('Tokens liés aux entités Commande.'),
+          'needs-data' => 'commande',
+        ],
+      ],
+      'tokens' => [
+        'commande' => [
+          'reference' => [
+            'name' => $this->t('Référence'),
+            'description' => $this->t('Numéro de référence de la commande.'),
+          ],
+        ],
+      ],
+    ];
+  }
+
+  #[Hook('tokens')]
+  public function tokens(
+    string $type,
+    array $tokens,
+    array $data,
+    array $options,
+    BubbleableMetadata $bubbleable_metadata,
+  ): array {
+    // Même logique que la version procédurale ci-dessus.
+    return [];
+  }
+
 }
 ```

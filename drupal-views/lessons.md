@@ -53,3 +53,25 @@ Bugs et pièges découverts en projet réel. Mis à jour après chaque incident.
 - **Cause :** Après `execute()`, le rendu est déjà en cours — modifier `result` directement est trop tard pour certains traitements
 - **Correct :** Utiliser `hook_views_post_execute()` pour modifier les résultats avant le rendu
 - **Prévention :** `hook_views_post_execute()` = modifier les données | `hook_views_pre_render()` = modifier les attachments/cache
+
+---
+
+## 2026-06-09 — Revue D11-currency
+
+### Plugins Views : attribut PHP ≠ annotation, syntaxe `TranslatableMarkup`
+- **Symptôme :** Un plugin Style/Display/Row copié depuis un vieux tuto en `@ViewsStyle(... @Translation("..."))` "fonctionne" mais part en legacy
+- **Cause :** Core 11 a migré 100 % de ses plugins Views vers les attributs `#[ViewsStyle(...)]` ; le discovery par annotation Doctrine sera retiré en D12
+- **Correct :** `#[ViewsStyle(id: "...", title: new TranslatableMarkup("..."))]` — `TranslatableMarkup`, **jamais** `@Translation` (qui n'existe pas en mode attribut)
+- **Prévention :** Sur tout nouveau plugin Views, écrire l'attribut directement et importer `Drupal\Core\StringTranslation\TranslatableMarkup`
+
+### Handler/plugin Views : `\Drupal::service()` au lieu de l'injection
+- **Symptôme :** `\Drupal::entityTypeManager()` dans `render()`/`preRender()`/`get()` — non testable, couplage container global
+- **Cause :** Réflexe `\Drupal::` au lieu du DI
+- **Correct :** Les handlers Views et `ResourceBase` implémentent `ContainerFactoryPluginInterface` → injecter via `create()` + constructeur typé
+- **Prévention :** Toute dépendance d'un plugin Views passe par `create(ContainerInterface $container, ...)`
+
+### Display plugin : ne pas surcharger `getRoutedDisplay()` pour "activer la route"
+- **Symptôme :** Confusion sur comment router un Display plugin custom (iCal, etc.)
+- **Cause :** `getRoutedDisplay()` retourne l'ID du display routé, pas un booléen d'activation
+- **Correct :** `uses_route: TRUE` dans l'attribut `#[ViewsDisplay]` + laisser `collectRoutes()` hérité gérer la route
+- **Prévention :** Lire la signature réelle d'une méthode core avant de la surcharger

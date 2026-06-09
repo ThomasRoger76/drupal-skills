@@ -53,3 +53,25 @@ Incidents de performance résolus en production. Mis à jour après chaque réso
 - **Cause :** Redis n'était pas accessible (port fermé) → Drupal fallback sur database sans erreur visible
 - **Correct :** Tester la connexion Redis : `drush php:eval "echo \Drupal::cache()->get('test') ? 'OK' : 'MISS';"` + vérifier les logs
 - **Prévention :** Ajouter un health check Redis dans le Makefile d'installation. Monitorer `redis-cli info stats | grep keyspace`
+
+---
+
+## 2026-06-09 — Corrections techniques (audit qualité)
+
+### `opcache.preload` qui boucle sur tout `vendor/` → PHP-FPM ne démarre plus
+- **Symptôme :** Après activation du preload, fatal errors au boot PHP-FPM (`Cannot declare class … already in use`, classes non résolvables)
+- **Cause :** Compiler récursivement tout `vendor/` ignore l'ordre des dépendances et le code conditionnel. Drupal ne supporte pas officiellement le preload (issue #3055735)
+- **Correct :** Ne PAS activer le preload par défaut. Si nécessaire : liste curée de classes stables + `try/catch` autour de `opcache_compile_file()`
+- **Prévention :** OPcache classique + APCu suffisent sur la majorité des projets. Tester le redémarrage PHP-FPM après tout ajout au preload
+
+### `getenv('APP_ENV', 'prod')` → la valeur par défaut est ignorée silencieusement
+- **Symptôme :** Préfixe de cache vide en l'absence de la variable d'env, collisions de clés entre environnements
+- **Cause :** `getenv()` de PHP ne prend pas de 2e argument de valeur par défaut (à la différence de la fonction `env()` Symfony/Laravel)
+- **Correct :** `(getenv('APP_ENV') ?: 'prod')` avec l'opérateur Elvis
+- **Prévention :** En settings.php Drupal, toujours encadrer `getenv()` par `?:` pour la valeur de repli
+
+### Context `user` confondu avec une exclusion du Dynamic Page Cache
+- **Symptôme :** Croyance que `'contexts' => ['user']` empêche la mise en cache DPC
+- **Cause :** Le DPC met bien en cache une variante par utilisateur ; c'est `'max-age' => 0` qui exclut, pas le context
+- **Correct :** Pour partager le cache, préférer `user.roles`. Réserver `max-age 0` aux composants réellement non cacheables
+- **Prévention :** Distinguer « varier le cache » (context) de « ne pas cacher » (max-age 0)

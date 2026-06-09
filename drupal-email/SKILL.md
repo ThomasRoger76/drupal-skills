@@ -55,7 +55,7 @@ Symfony Mailer (drupal/symfony_mailer) :
 | Tester le score de délivrabilité | mail-tester.com, MX Toolbox | [email-deliverability.md](email-deliverability.md) |
 | Gérer les bounces (emails invalides) | Return-Path + API provider SMTP | [email-deliverability.md](email-deliverability.md) |
 | **Envoyer des emails en masse sans timeout** | Queue API + 1 email = 1 queue item + `QueueWorker` qui appelle `EmailFactory` | [symfony-mailer-setup.md](symfony-mailer-setup.md) |
-| **Logger tous les emails envoyés** | EventSubscriber sur `MailerEvent::MESSAGE_SENT` → watchdog avec To + Subject | [email-testing.md](email-testing.md) |
+| **Logger tous les emails envoyés** | EmailProcessor (phase `EmailInterface::PHASE_POST_SEND`) ou EventSubscriber sur `MailerSendEvent` → watchdog avec To + Subject | [email-testing.md](email-testing.md) |
 | **Preview email dans l'UI admin** | Symfony Mailer → Settings → Policies → Preview button | [email-testing.md](email-testing.md) |
 | **Email avec pièce jointe programmatique** | `$email->attachFromPath('/path/to/file.pdf', 'invoice.pdf')` | [symfony-mailer-setup.md](symfony-mailer-setup.md) |
 | **Email inline image (logo dans le template)** | `$email->embed(File::fromPath($logo_path), 'logo')` → `<img src="{{ logo }}"` | [email-templates.md](email-templates.md) |
@@ -83,6 +83,14 @@ Symfony Mailer (drupal/symfony_mailer) :
 | EmailBuilder plugin | ✅ | ✅ | ✅ |
 | `#[EmailBuilder]` attribute | ❌ | ✅ opt. | ✅ std. |
 | DSN transport configuration | ✅ | ✅ | ✅ |
+
+> **Statut du legacy MailManager (`plugin.manager.mail` + `hook_mail()`)** : toujours
+> présent dans le core D11 (non supprimé), mais **considéré comme legacy** — la
+> roadmap Drupal vise à porter Symfony Mailer en core et à le retirer. Pour tout
+> nouveau code : **utiliser exclusivement Symfony Mailer** (`EmailFactory` +
+> `EmailBuilder`). Le sous-module **`symfony_mailer_bc`** ré-route automatiquement
+> les anciens `hook_mail()` vers Symfony Mailer — l'activer pendant une migration,
+> puis migrer chaque `hook_mail()` vers un `EmailBuilder` dédié.
 
 ## Auto-Amélioration
 

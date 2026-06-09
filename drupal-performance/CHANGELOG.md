@@ -2,6 +2,25 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Corrections techniques (audit qualité)**
+
+- **`php-opcache.md`** — Réécriture de la section OPcache Preload. L'ancien exemple bouclait sur
+  tout `vendor/` (casse PHP-FPM au démarrage). Ajout d'un avertissement clair : Drupal ne supporte
+  pas officiellement le preload (issue #3055735). Pattern correct curé + tolérant aux erreurs.
+  Correction de la mention « preload_user obligatoire » (requis seulement si PHP-FPM démarre en root)
+  et de la checklist.
+- **`redis-memcache.md`** — Correction du bug `getenv('APP_ENV', 'prod')` : `getenv()` PHP n'accepte
+  pas de 2e argument → remplacé par `(getenv('APP_ENV') ?: 'prod')`.
+- **`cache-system.md`** — Pattern d'exclusion Page Cache complété avec l'API native (`CacheableMetadata`,
+  `#cache['max-age'] => 0`). Correction du commentaire trompeur sur le context `user` et le DPC
+  (le DPC met bien en cache une variante par utilisateur ; c'est `max-age 0` qui exclut).
+- **`varnish-cdn.md`** — Correction du YAML `cdn.settings.yml` qui dupliquait la clé `type`
+  (`simple` + `auto-balanced` dans le même mapping → invalide). Séparé en deux variantes.
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale**
@@ -55,3 +74,4 @@
 | Skill version | Drupal | Notes |
 |--------------|--------|-------|
 | v1.0 | D8, D9, D10, D11 | BigPipe D8.2+, JIT PHP 8.1+, OPcache preload PHP 7.4+ |
+| v1.1 | D8, D9, D10, D11 | Idem + corrections preload, getenv, DPC, CDN YAML |

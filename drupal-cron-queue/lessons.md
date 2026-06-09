@@ -58,8 +58,8 @@ Après chaque incident lié au cron ou aux queues :
 ### 2026-05-16 — Queue croissante — items jamais consommés
 
 - **Symptôme :** `drush queue:list` montre des milliers d'items qui s'accumulent sans jamais diminuer
-- **Cause :** `cron: {"time": 60}` manquant dans l'annotation `@QueueWorker` → le cron ne consomme pas la queue
-- **Correct :** Ajouter `cron = {"time" = 60}` à l'annotation + `drush cron` pour tester
+- **Cause :** `cron: ['time' => 60]` manquant dans l'attribut `#[QueueWorker]` → le cron ne consomme pas la queue
+- **Correct :** Ajouter `cron: ['time' => 60]` à l'attribut + `drush cron` pour tester
 - **Prévention :** Après création d'un QueueWorker : `drush cron && drush queue:list` — vérifier que les items diminuent
 
 ### 2026-05-16 — Batch timeout HTTP — `max_execution_time` trop court
@@ -68,3 +68,17 @@ Après chaque incident lié au cron ou aux queues :
 - **Cause :** `max_execution_time = 60` dans `php.ini` — trop court pour des batchs lourds
 - **Correct :** Lancer via Drush : `drush php:script mon_batch.php` → pas de timeout. OU `set_time_limit(0)` dans la première opération batch.
 - **Prévention :** Batchs lourds = `drush_backend_batch_process()` depuis une commande Drush custom
+
+### 2026-06-09 — hook_cron() long chevauché — état corrompu, doublons d'import
+
+- **Symptôme :** Un import lancé par cron toutes les 15 min produit des doublons quand le run précédent (20 min) n'est pas fini
+- **Cause :** Aucun verrou — deux `hook_cron()` du même module tournent en parallèle sur le même dataset
+- **Correct :** `\Drupal::lock()->acquire('mon_module_import', 1800)` en garde, `release()` dans un `finally`
+- **Prévention :** Tout `hook_cron()` pouvant dépasser l'intervalle crontab = lock service (ou déléguer à une Queue)
+
+### 2026-06-09 — Ultimate Cron installé sur D11 en prod — module non stable
+
+- **Symptôme :** Comportement instable du scheduler après passage en D11, pas de correctifs disponibles
+- **Cause :** Ultimate Cron n'a qu'une `8.x-2.0-beta1` pour D11, pas de release stable maintenue
+- **Correct :** Remplacer par plusieurs lignes crontab système ciblant des commandes Drush dédiées
+- **Prévention :** Vérifier la présence d'une release **stable** D11 (`updates.drupal.org/release-history/<module>/current`) avant d'adopter un contrib pour le scheduling

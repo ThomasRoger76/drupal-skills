@@ -7,17 +7,16 @@ description: Intégration complète Next.js + Drupal avec le module drupal/next 
 
 ## Installation Côté Drupal
 
+> **Côté Drupal : Docker natif (`docker compose exec php ...`), jamais DDEV.**
+
 ```bash
-composer require drupal/next drupal/simple_oauth drupal/decoupled_router
-drush en next next_jsonapi simple_oauth decoupled_router -y
+docker compose exec php composer require drupal/next drupal/simple_oauth drupal/decoupled_router
+docker compose exec php drush en next next_jsonapi simple_oauth decoupled_router -y
 ```
 
 ```bash
-# Générer les clés RSA pour Simple OAuth
-mkdir -p oauth-keys
-openssl genrsa -out oauth-keys/private.key 2048
-openssl rsa -in oauth-keys/private.key -pubout -out oauth-keys/public.key
-chmod 600 oauth-keys/private.key
+# Générer les clés RSA pour Simple OAuth (commande dédiée, recommandée)
+docker compose exec php drush simple-oauth:generate-keys ../oauth-keys
 ```
 
 ---

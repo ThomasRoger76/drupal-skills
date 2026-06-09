@@ -142,23 +142,27 @@ Pour les endpoints avec logique métier complexe, un `RestResource` plugin est p
 // src/Plugin/rest/resource/ArticlesResource.php
 namespace Drupal\mon_module\Plugin\rest\resource;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\rest\Attribute\RestResource;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * @RestResource(
- *   id = "mon_module_articles",
- *   label = @Translation("Articles API"),
- *   uri_paths = {
- *     "canonical" = "/api/v1/articles/{id}",
- *     "create" = "/api/v1/articles",
- *   }
- * )
+ * Ressource REST custom pour les articles.
  */
-// D11 : #[RestResource(...)] attribute
+// D11 — attribut PHP (standard core).
+#[RestResource(
+  id: "mon_module_articles",
+  label: new TranslatableMarkup("Articles API"),
+  uri_paths: [
+    "canonical" => "/api/v1/articles/{id}",
+    "create" => "/api/v1/articles",
+  ],
+)]
 class ArticlesResource extends ResourceBase {
 
+  // En production : injecter entity_type.manager via create() (ResourceBase
+  // implémente déjà ContainerFactoryPluginInterface) plutôt que \Drupal::.
   public function get(int $id): ResourceResponse {
     $node = \Drupal::entityTypeManager()->getStorage('node')->load($id);
 

@@ -46,6 +46,20 @@ Problèmes avec les tokens Drupal découverts en projet réel.
 - **Correct :** Utiliser `[node:created:html_datetime]` qui retourne `2026-05-15T10:30:00+02:00`
 - **Prévention :** Pour Schema.org, toujours utiliser le format `html_datetime` sur les dates
 
+### 2026-06-08 — Token custom : contenu périmé après modification de l'entité
+
+- **Symptôme :** Une méta description générée par un token custom `[commande:montant]` reste figée après mise à jour de la commande ; il faut un `drush cr` pour la rafraîchir.
+- **Cause :** `hook_tokens()` lisait l'entité sans propager ses cache tags. Le rendu (page/bloc) est mis en cache sans dépendance vers l'entité → jamais invalidé.
+- **Correct :** Recevoir le 5e paramètre `BubbleableMetadata $bubbleable_metadata` et appeler `$bubbleable_metadata->addCacheableDependency($entity)` pour chaque entité lue. Passer aussi ce paramètre à `$token_service->generate(...)` lors d'un chaining.
+- **Prévention :** Toujours typer la signature complète de `hook_tokens()` (D8.6+) ; tout token dérivé d'une entité = au moins un `addCacheableDependency()`.
+
+### 2026-06-08 — module_load_include() déprécié pour charger le .tokens.inc
+
+- **Symptôme :** Avertissement de dépréciation `module_load_include()` en D10.3+/D11.
+- **Cause :** Fonction procédurale dépréciée. De plus, `mon_module.tokens.inc` est auto-chargé par le système token — aucun include manuel n'est nécessaire.
+- **Correct :** Placer `hook_token_info()`/`hook_tokens()` directement dans `mon_module.tokens.inc` (auto-chargé) ou `.module`. Si un include manuel est requis ailleurs : `\Drupal::moduleHandler()->loadInclude('mon_module', 'inc', 'mon_module.tokens')`.
+- **Prévention :** Suivre la convention core (`node.tokens.inc`) ; ne rien bootstrapper pour les hooks token.
+
 ### 2026-05-16 — hook_token_info() dans hook_install() — jamais découvert
 
 - **Symptôme :** Les tokens custom n'apparaissent pas dans le Token Tree Browser

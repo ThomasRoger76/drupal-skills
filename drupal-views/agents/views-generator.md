@@ -154,14 +154,18 @@ Si la description nécessite des handlers custom (champ calculé, filtre spécia
 ### Étape 4 — Vérification post-génération
 
 ```bash
-# Importer la config
-drush cim --source=config/install -y --partial
+# Préfixe Docker natif (jamais ddev) — adapter le nom du service PHP.
+# Si la config est dans config/install d'un module : l'installer/importer une fois,
+# puis travailler depuis config/sync (cex/cim) comme une config standard.
 
-# Vérifier que la Vue existe
-drush php:eval "var_dump(\Drupal\views\Views::getView('articles_recents'));"
+# Vider le cache pour que Views découvre la nouvelle vue
+docker compose exec php drush cr
 
-# Vider le cache
-drush cr
+# Exporter la vue créée vers config/sync (source de vérité)
+docker compose exec php drush cex -y
+
+# Vérifier que la Vue existe et est chargeable
+docker compose exec php drush php:eval "var_dump((bool) \Drupal\views\Views::getView('articles_recents'));"
 
 # Tester l'accès
 curl https://mon-site.com/articles-recents

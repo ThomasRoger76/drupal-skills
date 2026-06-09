@@ -29,17 +29,30 @@ Méthodes disponibles (ordre = priorité) :
 /mon-article        → langue par défaut (pas de préfixe)
 ```
 
-**Configuration :**
-```yaml
-# config/install/language.negotiation.yml
-method_weights_language_interface:
-  url: -8      # Priorité la plus haute (négatif = premier)
-  session: -4
-  browser: -2
-  selected_langcode: 12
+**Configuration :** deux fichiers core distincts — `language.types.yml` (méthodes +
+poids) et `language.negotiation.url.yml` (préfixes). Le fichier
+`language.negotiation.yml` n'existe pas dans Drupal core.
 
-# Préfixes URL
-language.negotiation.url.prefixes:
+```yaml
+# config/sync/language.types.yml — méthodes activées + poids
+negotiation:
+  language_interface:
+    enabled:
+      language-url: -8         # Priorité la plus haute (négatif = premier)
+      language-session: -4
+      language-browser: -2
+      language-selected: 12
+    method_weights:
+      language-url: -8
+      language-session: -4
+      language-browser: -2
+      language-selected: 12
+```
+
+```yaml
+# config/sync/language.negotiation.url.yml — préfixes URL
+source: path_prefix
+prefixes:
   fr: fr
   en: en
   de: de
@@ -73,10 +86,13 @@ de.mon-site.com     → langue DE
 
 **Configuration :**
 ```yaml
-# language.negotiation.url.domains
-fr: fr.mon-site.com
-en: en.mon-site.com
-de: de.mon-site.com
+# config/sync/language.negotiation.url.yml
+source: domain
+prefixes: {}
+domains:
+  fr: fr.mon-site.com
+  en: en.mon-site.com
+  de: de.mon-site.com
 ```
 
 **Prérequis :** DNS + certificats SSL par sous-domaine.
@@ -232,7 +248,7 @@ $detected = $method->getLangcode($request);
 
 ```bash
 # Vérifier quelle méthode est utilisée pour détecter la langue
-drush php:eval "
+docker compose exec php drush php:eval "
 \$negotiator = \Drupal::service('language_negotiator');
 \$methods = \$negotiator->getNegotiationMethods();
 foreach (\$methods as \$id => \$method) {
@@ -241,7 +257,7 @@ foreach (\$methods as \$id => \$method) {
 "
 
 # Vérifier les prefixes configurés
-drush config:get language.negotiation.url.prefixes
+docker compose exec php drush config:get language.negotiation.url prefixes
 
 # Tester la détection depuis un header spécifique
 curl -H "Accept-Language: fr-FR,fr;q=0.9" https://mon-site.com/

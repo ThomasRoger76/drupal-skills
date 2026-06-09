@@ -20,7 +20,7 @@ TMGMT est le module de gestion des workflows de traduction pour Drupal. Il perme
 ```bash
 # Module TMGMT + connecteurs
 composer require drupal/tmgmt
-drush en tmgmt tmgmt_content tmgmt_locale tmgmt_file -y
+docker compose exec php drush en tmgmt tmgmt_content tmgmt_locale tmgmt_file -y
 
 # Connecteurs de traducteurs (choisir selon le prestataire)
 composer require drupal/tmgmt_deepl       # DeepL (MT automatique)
@@ -91,9 +91,9 @@ $job = tmgmt_job_create('fr', 'en', 0, [
 $node = \Drupal\node\Entity\Node::load(42);
 $job->addItem('content', 'node', $node->id());
 
-// Configurer le traducteur
-$job->translator = 'deepl';
-$job->settings = [];
+// Configurer le traducteur (champ entité — utiliser set(), pas l'accès direct)
+$job->set('translator', 'deepl');
+$job->set('settings', []);
 
 // Sauvegarder et soumettre
 $job->save();
@@ -141,7 +141,7 @@ catch (\Exception $e) {
 
 ```bash
 # Lister tous les jobs de traduction
-drush php:eval "
+docker compose exec php drush php:eval "
 \$jobs = \Drupal::entityTypeManager()->getStorage('tmgmt_job')->loadMultiple();
 foreach (\$jobs as \$job) {
   echo \$job->id() . ': ' . \$job->label() . ' [' . \$job->getState() . ']' . PHP_EOL;
@@ -150,7 +150,7 @@ foreach (\$jobs as \$job) {
 "
 
 # Jobs en attente (ACTIVE)
-drush php:eval "
+docker compose exec php drush php:eval "
 \$jobs = \Drupal::entityTypeManager()->getStorage('tmgmt_job')
   ->loadByProperties(['state' => \Drupal\tmgmt\JobInterface::STATE_ACTIVE]);
 echo count(\$jobs) . ' job(s) en attente de traduction.' . PHP_EOL;
@@ -180,7 +180,7 @@ function mon_module_node_update(\Drupal\node\NodeInterface $node): void {
           0  // UID 0 = système
         );
         $job->addItem('content', 'node', $node->id());
-        $job->translator = 'deepl';
+        $job->set('translator', 'deepl');
         $job->save();
 
         try {
@@ -218,7 +218,7 @@ Permet de :
 
 ```bash
 # Lister les traducteurs configurés
-drush php:eval "
+docker compose exec php drush php:eval "
 \$translators = \Drupal::entityTypeManager()->getStorage('tmgmt_translator')->loadMultiple();
 foreach (\$translators as \$t) {
   echo \$t->id() . ': ' . \$t->label() . ' (' . \$t->getPluginId() . ')' . PHP_EOL;
@@ -226,7 +226,7 @@ foreach (\$translators as \$t) {
 "
 
 # Nettoyer les anciens jobs terminés
-drush php:eval "
+docker compose exec php drush php:eval "
 \$old_jobs = \Drupal::entityTypeManager()->getStorage('tmgmt_job')
   ->loadByProperties(['state' => \Drupal\tmgmt\JobInterface::STATE_FINISHED]);
 foreach (\$old_jobs as \$job) {

@@ -52,3 +52,17 @@ Incidents de déploiement réels. Mis à jour après chaque résolution.
 - **Cause :** Pas de dump DB avant le déploiement — `drush updb` a modifié des tables de façon irréversible
 - **Correct :** Restaurer depuis le backup quotidien automatisé (si configuré)
 - **Prévention :** `drush sql:dump --gzip` TOUJOURS avant `drush deploy` en production. Script atomique avec backup.
+
+### 2026-06-08 — `gunzip dump.sql.gz | drush sql:cli` n'importe rien
+
+- **Symptôme :** Import DB silencieusement vide après un `platform db:dump` / `ssh prod drush sql:dump`
+- **Cause :** `gunzip fichier.gz` décompresse **en place** et n'écrit rien sur stdout — le pipe vers `drush sql:cli` reçoit un flux vide
+- **Correct :** `gunzip -c fichier.sql.gz | drush sql:cli` (ou `zcat fichier.sql.gz | ...`)
+- **Prévention :** Toujours `-c` (stdout) quand `gunzip` est en amont d'un pipe.
+
+### 2026-06-08 — DDEV proscrit — Docker natif uniquement
+
+- **Symptôme :** Exemples de sync DB/aliases référençant DDEV (`.ddev.site`, `ddev drush`)
+- **Cause :** Standard projet : Docker natif (`docker compose exec php drush …`), jamais DDEV
+- **Correct :** `docker compose exec php drush sql:sync @prod @self` · URI locale `*.localhost`
+- **Prévention :** Aucune occurrence de `ddev` dans les skills Drupal — `docker compose exec php` partout.

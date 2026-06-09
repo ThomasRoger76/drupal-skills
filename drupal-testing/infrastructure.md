@@ -33,7 +33,18 @@ mon_module/
          bootstrap="web/core/tests/bootstrap.php"
          colors="true"
          beStrictAboutChangesToGlobalState="true"
-         printerClass="\Drupal\Tests\Listeners\HtmlOutputPrinter">
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true">
+
+  <!--
+    PHPUnit 10/11 : `printerClass` a été supprimé. Le rendu HTML des résultats
+    BrowserTest passe désormais par l'extension Drupal, enregistrée ainsi :
+  -->
+  <extensions>
+    <bootstrap class="Drupal\TestTools\Extension\HtmlLogging\HtmlOutputLogger">
+      <parameter name="outputDirectory" value="/tmp/drupal-browsertest-output"/>
+    </bootstrap>
+  </extensions>
 
   <php>
     <!-- URL de base du site (pour les tests Functional) -->
@@ -68,14 +79,18 @@ mon_module/
     </testsuite>
   </testsuites>
 
-  <coverage>
+  <!--
+    PHPUnit 10/11 : la définition des fichiers couverts se fait dans <source>,
+    plus dans <coverage><include> (syntaxe PHPUnit 9, supprimée).
+  -->
+  <source>
     <include>
       <directory>web/modules/custom</directory>
     </include>
     <exclude>
       <directory>web/modules/custom/*/tests</directory>
     </exclude>
-  </coverage>
+  </source>
 </phpunit>
 ```
 
@@ -125,24 +140,33 @@ docker compose exec php mysql -e "CREATE DATABASE IF NOT EXISTS drupal_test;"
 docker compose exec php mysql -e "GRANT ALL ON drupal_test.* TO 'drupal'@'%';"
 ```
 
-### Configuration `.docker compose exec php/config.yaml` pour les tests
+### Préparation du dossier de sortie BrowserTest
 
 ```yaml
-# .docker compose exec php/config.yaml — extensions utiles pour les tests
-webimage_extra_packages:
-  - php8.1-xdebug  # Coverage
-  
-hooks:
-  post-start:
-    - exec: "mkdir -p /tmp/drupal-browsertest-output"
+# docker-compose.yml — créer le dossier des screenshots au démarrage du container PHP
+services:
+  php:
+    # ... configuration existante (build, volumes, etc.)
+    # Xdebug pour la couverture est généralement déjà dans l'image PHP custom
+    command: >
+      sh -c "mkdir -p /tmp/drupal-browsertest-output && php-fpm"
 ```
 
 ### Setup ChromeDriver (FunctionalJavascript)
 
 ```bash
-# Ajouter le service Selenium dans docker-compose.yml
-# module non nécessaire avec Docker Compose
-docker compose restart php
+# Ajouter un service Selenium dans docker-compose.yml puis le démarrer
+docker compose up -d selenium
+```
+
+```yaml
+# docker-compose.yml — service Selenium Standalone Chrome
+services:
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: '2gb'
+    ports:
+      - "4444:4444"
 ```
 
 ```xml
@@ -166,14 +190,33 @@ docker compose restart php
 
 ---
 
-## Annotations PHPUnit dans Drupal
+## Métadonnées PHPUnit — Attributs PHP (standard D11) vs Annotations
+
+**Standard recommandé (D10.1+, obligatoire en D11 / PHPUnit 11) — attributs PHP :**
+
+```php
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+
+#[Group('mon_module')]
+#[CoversClass(MonService::class)]
+final class MonServiceTest extends UnitTestCase {
+
+  #[CoversMethod('methodName')]
+  #[DataProvider('monDataProvider')]
+  public function testMethodName(): void {
+    // ...
+  }
+}
+```
+
+**Forme historique (annotations docblock) — D8/D9/D10, dépréciée et supprimée dans PHPUnit 11 :**
 
 ```php
 /**
- * Tests du service MonService.
- *
- * @group mon_module          ← Groupe pour filtrer avec --group
- * @group mon_module_unit     ← Sous-groupe optionnel
+ * @group mon_module
  * @coversDefaultClass \Drupal\mon_module\Service\MonService
  */
 class MonServiceTest extends UnitTestCase {
@@ -182,20 +225,12 @@ class MonServiceTest extends UnitTestCase {
    * @covers ::methodName
    * @dataProvider monDataProvider
    */
-  public function testMethodName(): void {
-    // ...
-  }
+  public function testMethodName(): void {}
 }
 ```
 
-En D10+ avec PHP 8.1+, les attributs PHP sont supportés par PHPUnit 10 :
-```php
-#[\PHPUnit\Framework\Attributes\Group('mon_module')]
-#[\PHPUnit\Framework\Attributes\CoversClass(MonService::class)]
-class MonServiceTest extends UnitTestCase {
-  // ...
-}
-```
+> Sur un projet D11, n'utiliser que les attributs PHP. Rector (`palantirnet/drupal-rector`)
+> convertit automatiquement les annotations en attributs — voir [static-analysis.md](static-analysis.md).
 
 ---
 
@@ -205,7 +240,7 @@ class MonServiceTest extends UnitTestCase {
 |--------|-------|---------|
 | `Unable to find test modules` | Namespace PSR-4 incorrect | Vérifier `autoload-dev` dans `composer.json` |
 | `SIMPLETEST_DB not set` | Variable d'env manquante | Définir dans `phpunit.xml` ou `.env` |
-| `Could not connect to ChromeDriver` | Selenium non démarré | `# module non nécessaire avec Docker Compose |
+| `Could not connect to ChromeDriver` | Selenium non démarré | `docker compose up -d selenium` puis vérifier `docker compose ps` |
 | Tests kernel plus lents que prévu | SQLite non configuré | Utiliser `sqlite://` dans SIMPLETEST_DB pour les kernel tests |
 | `Class not found` dans bootstrap | Bootstrap Drupal non chargé | Vérifier que `bootstrap="web/core/tests/bootstrap.php"` est dans phpunit.xml |
 
@@ -296,4 +331,3 @@ docker compose exec php vendor/bin/behat
 | JS support | ✅ Selenium | ✅ WebDriverTestBase |
 | CI/CD | ✅ (config behat.yml) | ✅ (phpunit.xml) |
 | Idéal pour | Scénarios de recette client | Tests d'intégration dev |
-| `Class not found` dans bootstrap | Bootstrap Drupal non chargé | Vérifier que `bootstrap="web/core/tests/bootstrap.php"` est dans phpunit.xml |

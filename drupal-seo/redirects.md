@@ -94,8 +94,9 @@ function import_redirects_from_array(array $redirects): int {
 ## Intégration avec Pathauto
 
 ```
-Webform → Settings → URL aliases → "When an alias is changed:"
-→ ✅ "Redirect (301) from old to new URL"
+/admin/config/search/path/settings → section "Update action" :
+→ ✅ "Create a new alias. Delete the old alias and create a redirect."
+   (libellé exact Pathauto — nécessite le module drupal/redirect activé)
 
 Comportement :
   Article "Mon Titre" → alias /articles/mon-titre

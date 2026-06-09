@@ -47,3 +47,18 @@ Problèmes Composer rencontrés en projets Drupal réels. Mis à jour après cha
 - **Cause :** `COMPOSER_AUTH` défini directement dans la valeur du service Docker
 - **Correct :** `COMPOSER_AUTH: ${COMPOSER_AUTH}` dans docker-compose.yml → valeur dans `.env` (gitignored)
 - **Prévention :** Règle hookify sur les patterns de tokens dans docker-compose.yml
+
+---
+
+## 2026-06-09 — Audit qualité
+
+### composer-patches v2 — format étendu mal recopié (clé/champ erronés)
+- **Symptôme :** `composer install` ignore les patches ou échoue après passage en v2
+- **Cause :** Mauvaise clé (`extra.composer-patches` au lieu de `extra.patches`), mauvais champ (`source` au lieu de `url`), et structure objet au lieu d'une liste d'objets
+- **Correct :** v2 garde `extra.patches`. Format étendu = **liste** `[ {"description": "...", "url": "...", "sha256": "...", "depth": 1} ]`. Committer `patches.lock.json`
+- **Prévention :** v2 stable depuis 2.0.0 (oct. 2025) — ne plus utiliser `:^2.0@beta`. Format court v1 (`"desc": "url"`) toujours rétrocompatible
+
+### `composer update --lock` mal compris — croire qu'il fige les versions
+- **Symptôme :** On attend une mise à jour des versions, rien ne bouge
+- **Cause :** `composer update --lock` ne resynchronise que le content-hash du lock après édition manuelle du `composer.json` — il ne met PAS à jour les versions des packages
+- **Correct :** Pour aligner les contraintes sur l'installé → `composer bump` (Composer 2.4+). Pour mettre à jour les versions → `composer update <package>`

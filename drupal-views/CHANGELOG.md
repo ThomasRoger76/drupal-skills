@@ -2,6 +2,33 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Revue D11-currency & conformité standards (lead Drupal)**
+
+### Corrigé
+- **Attributs PHP Views (D11) :** tous les exemples de plugins basculés des annotations vers les attributs PHP, conformément au core 11 qui a migré 100 % de ses plugins Views.
+  - `custom-handlers.md` — Field/Filter/Sort/Relationship/Area : `@ViewsX` → `#[ViewsX]` + `use Drupal\views\Attribute\...`
+  - `views-plugins.md` — Style/Display/Row : annotations + `@Translation` → attributs + `new TranslatableMarkup(...)` (syntaxe core exacte)
+  - `views-rest-export.md` — `@RestResource` → `#[RestResource]`
+  - `views-paragraphs.md` — `@ViewsField` → `#[ViewsField]`
+- **Injection de dépendances :** ajout du pattern `create()` / `ContainerFactoryPluginInterface` pour les handlers et `ResourceBase` ; remplacement des `\Drupal::entityTypeManager()` dans les exemples par des services injectés (règle : pas de `\Drupal::` dans les classes).
+- **Display plugin iCal :** suppression du `getRoutedDisplay(): bool` trompeur (la méthode retourne l'ID du display routé) ; route via `uses_route: TRUE`.
+- **AJAX Views :** snippet "AJAX custom" réécrit en vanilla JS (l'ancien mélangeait `$(document)` jQuery dans une closure sans `$`, en contradiction avec la règle no-jQuery D10+).
+- **Docker natif :** agent `views-generator` — commandes drush préfixées `docker compose exec php` (jamais ddev) ; correction de l'import config erroné (`cim --source=config/install` → flux `cr` + `cex`). Note de convention ajoutée dans `SKILL.md`.
+
+### Ajouté
+- `SKILL.md` — note "D11 attributs PHP first" + 2 anti-patterns (DI, annotation legacy) + ligne versioning "plugins core migrés en attributs".
+- `views-programmatic.md` — méthode `executeDisplay()` (build + execute + render en un appel) et `preview()`.
+- `lessons.md` — 3 leçons (attributs vs annotations, DI dans plugins, `getRoutedDisplay`).
+
+### Vérifié (context7 / source core 11.x)
+- Existence des 12 classes `Drupal\views\Attribute\*` + `rest\Attribute\RestResource`.
+- Plugins core (`field/Standard`, `style/Grid`) confirmés en attributs avec `TranslatableMarkup`.
+- API conservées telles quelles car correctes : `$view->get_total_rows` / `total_rows`, `executeDisplay()`, `getRoutedDisplay()` (signature).
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale**
@@ -62,3 +89,4 @@
 | Skill version | Drupal testé | Notes |
 |--------------|-------------|-------|
 | v1.0 | D9, D10, D11 | jQuery absent D10+, PHP Attributes D11 |
+| v1.1 | D10.2+, D11 | Plugins en attributs PHP (standard core), DI via create(), Docker natif |

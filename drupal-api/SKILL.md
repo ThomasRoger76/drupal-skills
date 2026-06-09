@@ -13,6 +13,12 @@ Référentiel complet de Drupal en mode API-first / headless 8-11+ : JSON:API (c
 
 > **JSON:API first.** Avant de créer un endpoint custom (RestResource), vérifier que JSON:API ne suffit pas avec les filtres appropriés. JSON:API gère automatiquement la pagination, les includes, les permissions Drupal, et le cache.
 
+> **Conventions transverses (ce repo)**
+> - **Docker natif** : toute commande Drupal est préfixée `docker compose exec php` (`drush`, `composer`, génération de clés). Jamais DDEV.
+> - **Plugins en attributs PHP (D10.2+/D11)** : `#[RestResource]`, `#[QueueWorker]`, etc. Les annotations `@RestResource`/`@QueueWorker` sont dépréciées.
+> - **CORS par environnement** : whitelist stricte, jamais `*` ni `localhost` en prod — piloter par `getenv()` / `settings.local.php` / config_split.
+> - **API custom versionnée** : préfixe `/api/v1/`. Auth par OAuth2/Bearer, jamais de clé en paramètre d'URL.
+
 ---
 
 ## JSON:API vs REST API vs GraphQL — Tableau Décisionnel
@@ -95,6 +101,7 @@ Référentiel complet de Drupal en mode API-first / headless 8-11+ : JSON:API (c
 | `drupal/jsonapi_extras` | ✅ | ✅ | ✅ | ✅ |
 | CORS core config | ✅ | ✅ | ✅ | ✅ |
 | Decoupled Router (contrib) | ✅ | ✅ | ✅ | ✅ |
+| Plugins REST/Queue en attribut PHP `#[...]` | ❌ | ❌ | ✅ D10.2+ | ✅ (annotations dépréciées) |
 
 ## Auto-Amélioration
 

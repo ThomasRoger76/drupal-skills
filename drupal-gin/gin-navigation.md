@@ -1,27 +1,32 @@
 ---
 name: drupal-gin — gin navigation
-description: Configurer la nouvelle navigation sidebar Gin (drupal/gin_login) pour Drupal 10.3+ - navigation moderne, personnalisation, et accès programmatique.
+description: Configurer la navigation sidebar Gin (drupal/gin_toolbar + module Navigation core) pour Drupal 10.3+ - navigation moderne, personnalisation, et accès programmatique.
 ---
 
 # Gin Navigation — Sidebar Navigation Moderne
 
-## Contexte — Gin 3.x vs Navigation Core D11
+## Contexte — 3 systèmes de navigation distincts (ne pas confondre)
 
 ```
-Gin 3.x (D10.3+ compatible) :
-  → Sidebar navigation intégrée au thème Gin
-  → Configurable : icônes + libellés
-  → Sous-thème Gin peut surcharger les items
+1. drupal/gin_toolbar (module contrib séparé) :
+   → Fournit la toolbar Gin "classique" (style Seven/Claro amélioré)
+   → Géré par gin.settings → classic_toolbar: horizontal | vertical | new
+   → Requis EN PLUS de drupal/gin (pas un sous-module de gin)
 
-Gin Navigation (module séparé drupal/gin_toolbar) :
-  → Toolbar position : horizontal | sidebar | condensed
-  → Accessible depuis les Settings Gin
+2. Module Navigation (CORE Drupal) :
+   → Ajouté en core 10.3 (expérimental), stable en 11.x
+   → Sidebar latérale gauche moderne, repliable
+   → Module core "navigation" (PAS gin_toolbar, PAS gin_login)
+   → Gin s'y intègre : gin.settings → classic_toolbar: new
 
-Navigation Module (Core D11+) :
-  → Proposition de remplacement de la toolbar Drupal
-  → Expérimental D11, susceptible d'évoluer
-  → Gin intègre son propre système de navigation
+3. drupal/gin_login (module contrib) :
+   → Uniquement la page de connexion brandée
+   → AUCUN rapport avec la navigation admin (cf. gin-setup.md)
 ```
+
+> ⚠️ Erreur fréquente : `gin_login` ne gère PAS la navigation. La sidebar
+> moderne D10.3+ vient du module **core `navigation`**, activée côté Gin par
+> `classic_toolbar: new`.
 
 ---
 
@@ -30,18 +35,24 @@ Navigation Module (Core D11+) :
 ```
 /admin/appearance/settings/gin
 
-→ Gin Toolbar → Layout options :
-  ├── Classic (horizontal bar) — barre en haut traditionnelle
-  ├── Sidebar — navigation latérale gauche avec icônes + labels
-  └── Condensed — sidebar avec icônes uniquement (pour petits écrans)
+→ Gin Toolbar → Navigation :
+  ├── Horizontal — barre en haut traditionnelle (style Claro)
+  ├── Vertical — toolbar latérale gauche fournie par gin_toolbar
+  └── New (Navigation module) — sidebar moderne du module core navigation (D10.3+)
 ```
 
 ```yaml
-# config/install/gin.settings.yml — configurer en code
-classic_toolbar: sidebar   # horizontal | sidebar | condensed
-secondary_toolbar_enabled: false
-sidebar_expand_all: false
+# config/sync/gin.settings.yml — configurer en code
+# Valeurs réelles de classic_toolbar : horizontal | vertical | new
+# 'new' = délègue au module core "navigation" (doit être activé : drush en navigation -y)
+settings:
+  classic_toolbar: new
+  secondary_toolbar_frontend: false
+  show_user_theme_settings: true
 ```
+
+> Vérifier les valeurs exactes pour la version installée :
+> `drush config:get gin.settings settings.classic_toolbar`
 
 ---
 
@@ -111,29 +122,28 @@ function mon_module_toolbar_alter(array &$items): void {
 ## Gin Navigation et Layout Builder
 
 ```
-Gin sidebar navigation + Layout Builder :
-  → Pas de conflit — la navigation reste fixe à gauche
-  → Le Canvas Layout Builder occupe toute la largeur centrale
-  → Pour économiser l'espace : utiliser Gin en mode "condensed"
-     lors de l'édition avec Layout Builder
+Sidebar navigation + Layout Builder :
+  → Pas de conflit — la navigation reste fixe à gauche, repliable
+  → Le canvas Layout Builder occupe toute la largeur centrale
+  → Replier la sidebar (module navigation) pour gagner de l'espace en édition
 
 Configuration recommandée pour les sites avec Layout Builder :
-  → Gin toolbar : sidebar ou condensed
+  → classic_toolbar: new (sidebar repliable) ou vertical
   → Activer "sticky action buttons" dans Gin settings
-  → Utiliser le module "gin_gutenberg" si éditeur Gutenberg est utilisé
+  → Utiliser le module "gin_gutenberg" si l'éditeur Gutenberg est utilisé
 ```
 
 ---
 
 ## Gin Toolbar vs Gin Navigation — Différences
 
-| | Gin Toolbar | Navigation Module (D11 core) |
+| | Gin Toolbar | Module Navigation (core) |
 |---|---|---|
-| Source | Module contrib `drupal/gin_toolbar` | Core Drupal 11 (expérimental) |
-| Compatibilité | D9, D10, D11 | D11 uniquement |
-| Personnalisation | Hook `hook_toolbar_alter()` | Hook `hook_menu_local_tasks_alter()` |
-| Icônes | CSS background-image | SVG sprites |
-| Config UI | Gin settings | Separate config page |
+| Source | Module contrib `drupal/gin_toolbar` | Core Drupal (10.3 expérimental, 11.x stable) |
+| Compatibilité | D9, D10, D11 | D10.3+ / D11 |
+| Personnalisation | Hook `hook_toolbar_alter()` | Bloc « Navigation », liens de menu admin + `hook_block_build_alter` |
+| Icônes | CSS background-image | Icônes du système d'icônes core (`*.icons.yml`) |
+| Config UI | Gin settings | `/admin/config/user-interface/navigation-blocks` |
 
 ```bash
 # Activer gin_toolbar (pour la navigation Gin)
@@ -165,12 +175,16 @@ services:
 ## Monitoring de l'Accès via Navigation
 
 ```bash
-# Vérifier quels éléments de navigation sont disponibles
+# Les éléments de navigation dépendent des permissions de l'utilisateur courant.
+# 'access toolbar' = module toolbar / gin_toolbar ; 'access navigation' = module core navigation.
 drush php:eval "
-\$toolbar = \Drupal::service('toolbar.menu_tree');
-// Les éléments de navigation dépendent des permissions de l'utilisateur
-\$current_user = \Drupal::currentUser();
-echo 'Admin: ' . (\$current_user->hasPermission('administer site configuration') ? 'OUI' : 'NON') . PHP_EOL;
-echo 'Access toolbar: ' . (\$current_user->hasPermission('access toolbar') ? 'OUI' : 'NON') . PHP_EOL;
+\$u = \Drupal::currentUser();
+echo 'admin config:   ' . (\$u->hasPermission('administer site configuration') ? 'OUI' : 'NON') . PHP_EOL;
+echo 'access toolbar: ' . (\$u->hasPermission('access toolbar') ? 'OUI' : 'NON') . PHP_EOL;
+echo 'access navigation: ' . (\$u->hasPermission('access navigation') ? 'OUI' : 'NON') . PHP_EOL;
 "
 ```
+
+> Masquer un item de toolbar selon le rôle/permission : faire la vérification
+> `$account->hasPermission(...)` **dans** `hook_toolbar_alter()` avant d'ajouter
+> l'item, et ajouter le cache context `'user.permissions'` via `#cache`.

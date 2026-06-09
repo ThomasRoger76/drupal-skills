@@ -48,9 +48,13 @@ class CommandeEmailBuilder extends EmailBuilderBase {
 
   /**
    * Initialiser l'email depuis les paramètres passés.
+   *
+   * Signature variadique imposée par EmailBuilderBase::createParams() :
+   * `createParams(EmailInterface $email, ...$params)`. Les arguments passés à
+   * `newTypedEmail($type, $sub_type, ...$params)` arrivent ici dans l'ordre.
    */
-  public function createParams(EmailInterface $email, ?Commande $commande = NULL): void {
-    if ($commande) {
+  public function createParams(EmailInterface $email, mixed $commande = NULL): void {
+    if ($commande instanceof Commande) {
       $email->setParam('commande', $commande);
     }
   }
@@ -178,9 +182,22 @@ class CommandeService {
 
 ## Remplacement des Emails Système Drupal
 
+Symfony Mailer prend en charge les emails système via ses sous-modules livrés
+avec le module : activer `symfony_mailer_bc` (bridge MailManager) ou directement
+le module — les EmailBuilder core (`user`, `update`, `contact`...) sont alors
+fournis et les policies par défaut créées à l'installation.
+
 ```bash
-# Importer les policies par défaut (emails user, password reset, etc.)
-drush php:eval "\Drupal::service('symfony_mailer.helper')->importTransportConfig();"
+# Activer le module crée déjà les EmailBuilder core et les policies par défaut.
+# Pas de méthode d'import "magique" : on configure les overrides via l'UI ou la config.
+drush en symfony_mailer -y
+
+# Lister les EmailBuilder (types d'emails) disponibles
+drush php:eval "
+foreach (\Drupal::service('plugin.manager.email_builder')->getDefinitions() as \$id => \$def) {
+  echo \$id . PHP_EOL;
+}
+"
 
 # Vérifier les policies actives
 # /admin/config/system/mailer/policy

@@ -11,12 +11,18 @@ description: Déploiement zéro-temps-d'arrêt pour Drupal - atomic symlinks, dr
 # drush deploy = séquence correcte en une seule commande
 drush deploy
 
-# Équivaut à :
-drush updatedb -y          # 1. Appliquer les updates DB (hook_update_N, hook_deploy_N)
-drush config:import -y     # 2. Importer la config YAML (après que le schéma soit à jour)
-drush cache:rebuild        # 3. Vider les caches
+# Équivaut à (ordre garanti par Drush) :
+drush updatedb -y          # 1. hook_update_N (schéma) — AVANT la config
+drush config:import -y     # 2. Importer la config YAML (sur un schéma à jour)
+drush cache:rebuild        # 3. Reconstruire les caches
+drush deploy:hook -y       # 4. hook_deploy_NAME (logique post-config : data migration…)
 
 # ⚠️ L'ordre est crucial — ne jamais faire cim avant updb
+# 💡 D11 / Drush 12+ : les hooks de déploiement sont nommés
+#    function HOOK_deploy_set_default_value(&$sandbox) dans MODULE.deploy.php
+#    (le suffixe numéroté hook_deploy_N reste supporté).
+#    hook_deploy_NAME tourne APRÈS cim — idéal pour manipuler des données
+#    qui dépendent de la config fraîchement importée.
 ```
 
 ---
@@ -86,7 +92,18 @@ CURRENT_LINK="/var/www/current"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 RELEASE="$DEPLOY_DIR/$TIMESTAMP"
 
+# Filet de sécurité : désactiver le maintenance mode même si le script échoue
+# (cf. lessons.md — maintenance mode oublié actif après déploiement)
+trap '[ -L "$CURRENT_LINK" ] && "$CURRENT_LINK/vendor/bin/drush" \
+  state:set system.maintenance_mode 0 --input-format=integer -y || true' ERR
+
 echo "=== Déploiement $TIMESTAMP ==="
+
+# 0. Backup DB AVANT toute modification (cf. lessons.md — rollback impossible)
+if [ -L "$CURRENT_LINK" ]; then
+  "$CURRENT_LINK/vendor/bin/drush" sql:dump --gzip \
+    --result-file="$SHARED_DIR/backups/db_$TIMESTAMP.sql"
+fi
 
 # 1. Créer le répertoire de release
 mkdir -p "$RELEASE"
@@ -196,8 +213,8 @@ drush sql:sync @prod @local
 drush rsync @prod:%files @local:%files
 
 # Sans alias — via dump/restore
-ssh prod "drush sql:dump --gzip | base64" | base64 -d | gunzip | drush sql:cli
+ssh prod "drush sql:dump --gzip | base64" | base64 -d | gunzip -c | drush sql:cli
 
-# Avec DDEV
-ddev drush sql:sync @prod @self
+# Avec Docker natif (jamais DDEV)
+docker compose exec php drush sql:sync @prod @self
 ```

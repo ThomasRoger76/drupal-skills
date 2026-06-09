@@ -130,10 +130,25 @@ mon_theme/
 
 Utiliser Vite par défaut (pas Gulp ni Webpack) pour les nouveaux thèmes.
 
+## Alternative : starterkit core (Drupal 10.3+ / 11)
+
+Pour un thème custom *from scratch* sans base theme contrib, Drupal fournit un générateur
+officiel basé sur le starterkit `starterkit_theme`. Il produit une arborescence à jour
+(régions, libraries, templates stables) que l'on peut ensuite adapter :
+
+```bash
+# Génère web/themes/mon_theme à partir du starterkit core
+docker compose exec php php core/scripts/drupal generate-theme mon_theme --name="Mon Thème"
+```
+
+Utiliser ce générateur comme base pour `--type=standalone` quand le projet veut un thème
+core-aligned ; sinon générer les fichiers manuellement selon les règles ci-dessus.
+
 ## Vérification post-génération
 
 ```bash
-docker compose exec php drush theme:enable mon_theme -y
+# theme:install (theme:enable est déprécié depuis Drush 11)
+docker compose exec php drush theme:install mon_theme -y
 docker compose exec php drush config:set system.theme default mon_theme -y
 docker compose exec php drush cr
 # Vérifier qu'aucune erreur n'apparaît dans les logs

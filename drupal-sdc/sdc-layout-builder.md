@@ -26,19 +26,21 @@ Rendu final : layout_builder appelle le Block, qui rend le SDC
 // src/Plugin/Block/CardBlock.php
 namespace Drupal\mon_module\Plugin\Block;
 
+use Drupal\Core\Block\Attribute\Block;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Block basé sur le composant SDC 'card'.
  *
- * @Block(
- *   id = "mon_module_card",
- *   admin_label = @Translation("Carte (SDC)"),
- *   category = @Translation("Composants"),
- * )
+ * D11 : attribut PHP (l'annotation @Block est dépréciée).
  */
-// D11 : #[Block(id: "mon_module_card", admin_label: new TranslatableMarkup("Carte"), ...)]
+#[Block(
+  id: "mon_module_card",
+  admin_label: new TranslatableMarkup("Carte (SDC)"),
+  category: new TranslatableMarkup("Composants"),
+)]
 class CardBlock extends BlockBase {
 
   /**
@@ -185,20 +187,23 @@ Pour créer des layouts SDC-based :
 ```php
 <?php
 // src/Plugin/Layout/CardGridLayout.php
+use Drupal\Core\Layout\Attribute\Layout;
 use Drupal\Core\Layout\LayoutBase;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * @Layout(
- *   id = "mon_module_card_grid",
- *   label = @Translation("Grille de cartes SDC"),
- *   category = @Translation("Mon Module"),
- *   regions = {
- *     "carte_1" = { "label" = @Translation("Carte 1") },
- *     "carte_2" = { "label" = @Translation("Carte 2") },
- *     "carte_3" = { "label" = @Translation("Carte 3") },
- *   }
- * )
+ * Layout SDC-based pour Layout Builder (D11 : attribut PHP).
  */
+#[Layout(
+  id: "mon_module_card_grid",
+  label: new TranslatableMarkup("Grille de cartes SDC"),
+  category: new TranslatableMarkup("Mon Module"),
+  regions: [
+    "carte_1" => ["label" => new TranslatableMarkup("Carte 1")],
+    "carte_2" => ["label" => new TranslatableMarkup("Carte 2")],
+    "carte_3" => ["label" => new TranslatableMarkup("Carte 3")],
+  ],
+)]
 class CardGridLayout extends LayoutBase {
 
   public function build(array $regions): array {
@@ -223,7 +228,7 @@ class CardGridLayout extends LayoutBase {
 ```bash
 # Lister les composants SDC disponibles
 drush php:eval "
-foreach (\Drupal::service('sdc.component_registry')->getAllComponents() as \$id => \$c) {
+foreach (array_keys(\Drupal::service('plugin.manager.sdc')->getDefinitions()) as \$id) {
   echo \$id . PHP_EOL;
 }
 "

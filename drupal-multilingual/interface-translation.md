@@ -103,13 +103,13 @@ msgstr "Article"
 
 ```bash
 # Importer un fichier .po
-drush locale:import fr /chemin/vers/fr.po
+docker compose exec php drush locale:import fr /chemin/vers/fr.po
 
 # Forcer l'override des traductions existantes
-drush locale:import fr /chemin/vers/fr.po --override=all
+docker compose exec php drush locale:import fr /chemin/vers/fr.po --override=all
 
 # Importer pour une langue spécifique avec type
-drush locale:import fr /chemin/vers/fr.po --type=customized
+docker compose exec php drush locale:import fr /chemin/vers/fr.po --type=customized
 
 # Types :
 # customized = traductions personnalisées (ne seront pas écrasées par locale:update)
@@ -122,13 +122,13 @@ drush locale:import fr /chemin/vers/fr.po --type=customized
 
 ```bash
 # Télécharger et mettre à jour les traductions depuis drupal.org
-drush locale:update
+docker compose exec php drush locale:update
 
 # Vérifier l'état des traductions
-drush locale:check
+docker compose exec php drush locale:check
 
 # Statistiques de traduction
-drush php:eval "
+docker compose exec php drush php:eval "
 \$stats = locale_translation_get_file_history();
 foreach (\$stats as \$module => \$info) {
   if (isset(\$info['fr'])) {
@@ -144,10 +144,10 @@ foreach (\$stats as \$module => \$info) {
 
 ```bash
 # Exporter uniquement les traductions personnalisées (customized)
-drush locale:export fr --types=customized > fr-custom.po
+docker compose exec php drush locale:export fr --types=customized > fr-custom.po
 
 # Exporter toutes les traductions d'une langue
-drush locale:export fr > fr-all.po
+docker compose exec php drush locale:export fr > fr-all.po
 ```
 
 ---
@@ -199,7 +199,7 @@ $message = \Drupal::translation()->formatPlural(
 
 ```bash
 # Voir les chaînes non traduites pour une langue
-drush php:eval "
+docker compose exec php drush php:eval "
 \$query = \Drupal::database()->select('locales_source', 'ls');
 \$query->leftJoin('locales_target', 'lt', 'ls.lid = lt.lid AND lt.language = :lang', [':lang' => 'fr']);
 \$query->fields('ls', ['source', 'context']);
@@ -212,7 +212,7 @@ foreach (\$results as \$r) {
 "
 
 # Nombre de chaînes traduites vs total
-drush php:eval "
+docker compose exec php drush php:eval "
 \$stats = locale_translation_status();
 if (isset(\$stats['drupal']['fr'])) {
   \$s = \$stats['drupal']['fr'];
@@ -221,6 +221,6 @@ if (isset(\$stats['drupal']['fr'])) {
 "
 
 # Nettoyer le cache des traductions
-drush locale:check
-drush cr
+docker compose exec php drush locale:check
+docker compose exec php drush cr
 ```

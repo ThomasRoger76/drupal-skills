@@ -30,8 +30,8 @@ GraphQL :
 ## Installation
 
 ```bash
-composer require drupal/graphql
-drush en graphql -y
+docker compose exec php composer require drupal/graphql
+docker compose exec php drush en graphql -y
 
 # Version recommandée : drupal/graphql ^4
 # GraphQL 4 utilise des Plugins PHP — pas de YAML schema

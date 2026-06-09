@@ -5,6 +5,15 @@ description: Créer des processors Search API custom pour transformer les donné
 
 # Custom Search API Processors — Référence Complète
 
+## ⚠️ Annotation, pas attribut PHP (D8-D11)
+
+Contrairement aux plugins du **core** (Block, FieldFormatter…) passés aux attributs PHP
+`#[...]` en D10/D11, le module **Search API garde l'annotation Doctrine `@SearchApiProcessor`**.
+La classe `Drupal\search_api\Attribute\SearchApiProcessor` **n'existe pas** : utiliser un
+attribut PHP casserait la découverte du plugin. Même chose pour `@SearchApiBackend`,
+`@SearchApiDatasource`, `@SearchApiTracker`. Conserver le docblock d'annotation tant que
+le module n'a pas migré (suivre l'issue d'upstream avant de convertir).
+
 ## Types de Processors
 
 ```

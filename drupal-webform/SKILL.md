@@ -15,6 +15,10 @@ Référentiel complet du module Webform Drupal 8-11+ : éléments de formulaire 
 
 ---
 
+> **Convention Drush.** Toutes les commandes `drush` de ce skill s'exécutent en Docker natif :
+> `docker compose exec php drush ...` (jamais `ddev`). Les blocs `drush php:eval` multiligne sont
+> écrits sans préfixe pour la lisibilité — les préfixer en pratique.
+
 ## Quick Decision Table
 
 | Besoin | Outil | Référence |
@@ -80,6 +84,8 @@ Référentiel complet du module Webform Drupal 8-11+ : éléments de formulaire 
 | YAML import/export | ✅ | ✅ | ✅ | ✅ |
 | Computed elements | ✅ | ✅ | ✅ | ✅ |
 | Custom handlers | ✅ | ✅ | ✅ | ✅ |
+| Plugins via attribut PHP `#[WebformHandler]` / `#[WebformElement]` | ❌ | ❌ | 6.2+ | ✅ |
+| Annotation `@WebformHandler` (Doctrine) | ✅ | ✅ | dépréciée | dépréciée |
 
 ## Auto-Amélioration
 

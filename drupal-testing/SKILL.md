@@ -101,7 +101,7 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 | `$this->drupalGet()` sans assert sur le status code | Toujours `$this->assertSession()->statusCodeEquals(200)` | Test silencieux qui passe même sur 404 |
 | Fixtures créées dans le test sans factory méthode | Extraire `createTestNode()` dans un trait réutilisable | Code dupliqué dans chaque test |
 | FunctionalJavascript pour tester du HTML statique | BrowserTestBase suffit — FunctionalJS requiert ChromeDriver et est 10× plus lent | Tests inutilement lents en CI |
-| Pas de couverture de code mesurée en CI | `--coverage-clover` + seuil 70% dans phpunit.xml (`forceCoversAnnotation`) | Régression de coverage invisible |
+| Pas de couverture de code mesurée en CI | `--coverage-clover` + seuil via `--min-coverage` (ou `requireCoverageMetadata="true"` dans `<phpunit>` — PHPUnit 10/11, remplace l'ancien `forceCoversAnnotation`) | Régression de coverage invisible |
 
 ## Évolution par Version Majeure
 

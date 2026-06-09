@@ -49,11 +49,15 @@ description: "[node:summary]"           # Body summary si défini
 description: "[node:body:summary]"      # Résumé automatique du body
 
 # Open Graph
+# ⚠️ Le token image dépend du type de champ :
+#   - Champ Image (File direct)  : [node:field_image:entity:url]
+#   - Champ Media (image)        : [node:field_image:entity:field_media_image:entity:url]
+# Le token …:file:url échoue silencieusement avec un champ Media (cf. lessons.md).
 og_title: "[node:title]"
 og_description: "[node:summary]"
-og_image: "[node:field_image:entity:file:url]"
-og_image_width: "[node:field_image:width]"
-og_image_height: "[node:field_image:height]"
+og_image: "[node:field_image:entity:field_media_image:entity:url]"   # cas Media
+og_image_width: "[node:field_image:entity:field_media_image:width]"
+og_image_height: "[node:field_image:entity:field_media_image:height]"
 og_type: article
 og_url: "[node:url]"
 
@@ -61,7 +65,7 @@ og_url: "[node:url]"
 twitter_card: summary_large_image
 twitter_title: "[node:title]"
 twitter_description: "[node:summary]"
-twitter_image: "[node:field_image:entity:file:url]"
+twitter_image: "[node:field_image:entity:field_media_image:entity:url]"
 
 # Advanced
 canonical_url: "[node:url]"
@@ -90,7 +94,8 @@ foreach (array_keys(\$info['types']) as \$type) {
 # [node:created]              → Date de création
 # [node:changed]              → Date de modification
 # [node:author:name]          → Nom de l'auteur
-# [node:field_image:entity:file:url]   → URL de l'image
+# [node:field_image:entity:file:url]   → URL image (champ Image / File direct)
+# [node:field_image:entity:field_media_image:entity:url] → URL image (champ Media)
 # [node:field_tags:0:entity:name]      → Premier tag
 # [site:name]                 → Nom du site
 # [site:url]                  → URL du site

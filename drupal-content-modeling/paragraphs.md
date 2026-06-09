@@ -68,13 +68,17 @@ Les Behaviors ajoutent des options de configuration (layout, couleur de fond, ta
 namespace Drupal\mon_module\Plugin\paragraphs\Behavior;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\paragraphs\Annotation\ParagraphsBehavior;
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\paragraphs\Entity\ParagraphsType;
 use Drupal\paragraphs\ParagraphsBehaviorBase;
 
 /**
  * Configure la mise en page d'une section (pleine largeur, boxed, coloré).
+ *
+ * ⚠️ Contrairement au core Drupal, le module Paragraphs n'a PAS migré ses
+ * plugins Behavior vers les attributs PHP — y compris en D11. L'annotation
+ * @ParagraphsBehavior dans le docblock reste la seule voie supportée.
+ * Ne PAS convertir en #[ParagraphsBehavior(...)] : le plugin ne serait pas découvert.
  *
  * @ParagraphsBehavior(
  *   id = "mon_module_section_behavior",
@@ -83,8 +87,6 @@ use Drupal\paragraphs\ParagraphsBehaviorBase;
  *   weight = 0,
  * )
  */
-// D11 : utiliser #[ParagraphsBehavior(...)] attribute PHP
-
 class SectionBehavior extends ParagraphsBehaviorBase {
 
   /**
@@ -279,10 +281,11 @@ paragraph--TYPE--view-mode.html.twig                   (par type + view mode)
   set classes = [
     'paragraph',
     'paragraph--type--' ~ paragraph.bundle|clean_class,
-    paragraph.isPublished() ? 'paragraph--view-mode--' ~ view_mode|clean_class,
+    'paragraph--view-mode--' ~ view_mode|clean_class,
+    not paragraph.isPublished() ? 'paragraph--unpublished',
     'layout--' ~ behavior_settings.layout|default('boxed')|clean_class,
     'couleur-fond--' ~ behavior_settings.couleur_fond|default('blanc')|clean_class,
-  ]
+  ]|filter(c => c is not empty)
 %}
 
 <section{{ attributes.addClass(classes) }}>

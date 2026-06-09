@@ -44,12 +44,13 @@ Référentiel complet du module Token Drupal 8-11+ : tokens natifs (node, user, 
 | **Déboguer un token non résolu** | Vérifier `hook_token_info()` retourne bien le type, `drush cr` | [custom-tokens.md](custom-tokens.md) |
 | **Token custom sur entité custom** | `hook_token_info()` + `hook_tokens()` PHP complet avec `$data['mon_type']` | [custom-tokens.md](custom-tokens.md) |
 | **Token chaînable vers une entité** | `'type' => 'taxonomy_term'` + `$token_service->findWithPrefix($tokens, $name)` | [custom-tokens.md](custom-tokens.md) |
-| **Cacher le résultat d'un token lent** | `cache.default` dans `hook_tokens()` avec cache tag de l'entité | [custom-tokens.md](custom-tokens.md) |
+| **Propager le cache d'un token (entité)** | `$bubbleable_metadata->addCacheableDependency($entity)` dans `hook_tokens()` | [custom-tokens.md](custom-tokens.md) |
+| **Hook token OOP Drupal 11** | `#[Hook('token_info')]` / `#[Hook('tokens')]` dans `src/Hook/` | [custom-tokens.md](custom-tokens.md) |
 | Lister tous les tokens disponibles (UI) | `/admin/help/token` — Token Tree navigable par type | [token-basics.md](token-basics.md) |
 | Token avec fallback si vide | `[node:summary\|[node:title]]` (pipe = fallback) | [token-basics.md](token-basics.md) |
 | **Token dans un YAML de migration (via callback)** | `plugin: callback` + `callable: 'token_replace'` OU custom process plugin appelant `\Drupal::token()->replace()` | [tokens-in-modules.md](tokens-in-modules.md) |
 | **Token dans ECA / Rules (automatisation)** | Token context injecté automatiquement selon l'entité déclencheur | [tokens-in-modules.md](tokens-in-modules.md) |
-| **Token lazy — évaluation différée pour perfs** | `$token_service->replace($text, $data, ['langcode' => $langcode, 'callback' => NULL])` | [custom-tokens.md](custom-tokens.md) |
+| **Token lent — différer le rendu (perfs)** | Render array `#lazy_builder` / placeholder, PAS une option de `replace()` | [custom-tokens.md](custom-tokens.md) |
 | **Token sur un champ multilingue** | Injecter `['langcode' => $langcode]` dans le contexte `token->replace()` | [custom-tokens.md](custom-tokens.md) |
 | **Token de plusieurs types dans un seul module** | `hook_token_info()` retourne plusieurs entrées dans `types` et `tokens` | [custom-tokens.md](custom-tokens.md) |
 | **Token sécurisé (jamais de HTML brut)** | `Xss::filter()` ou `Html::escape()` sur la valeur retournée dans `hook_tokens()` | [custom-tokens.md](custom-tokens.md) |
@@ -62,7 +63,8 @@ Référentiel complet du module Token Drupal 8-11+ : tokens natifs (node, user, 
 | Hardcoder le nom du site dans Metatag | `[site:name]` via token | Doit être mis à jour manuellement après changement |
 | `[node:title]` sans fallback | `[node:title\|[site:name]]` (token chain) | Titre vide si nœud sans titre |
 | Tokens sans `['clear' => TRUE]` si optionnel | Toujours `clear: true` pour les tokens qui peuvent être vides | `[node:field_optionnel]` laissé tel quel dans le texte |
-| Créer un token avec un callback lent | Cacher le résultat ou utiliser `#lazy_builder` | Ralentit chaque remplacement de token |
+| Oublier `BubbleableMetadata` dans `hook_tokens()` | `$bubbleable_metadata->addCacheableDependency($entity)` pour chaque entité lue | Contenu périmé servi : le cache n'est jamais invalidé quand l'entité change |
+| Retourner du HTML brut sans tenir compte de `$options['sanitize']` | `Html::escape()` / `Xss::filter()` selon le contexte ; respecter `$sanitize` | Faille XSS — un token est interpolé dans du markup |
 | Token type `id` qui clash avec un type existant | Préfixer avec le nom du module : `mon_module_commande` | Conflits avec d'autres modules |
 | Utiliser `token_replace()` (fonction D7) | `\Drupal::token()->replace()` (service D8+) | Fonction dépréciée/supprimée |
 
@@ -74,8 +76,11 @@ Référentiel complet du module Token Drupal 8-11+ : tokens natifs (node, user, 
 | Token Tree UI | ✅ | ✅ | ✅ | ✅ |
 | `hook_token_info()` | ✅ | ✅ | ✅ | ✅ |
 | `hook_tokens()` | ✅ | ✅ | ✅ | ✅ |
+| 5e param `BubbleableMetadata` (`hook_tokens`) | ✅ (8.6+) | ✅ | ✅ | ✅ |
+| Hooks OOP par attribut `#[Hook]` | ❌ | ❌ | ❌ | ✅ |
 | Tokens natifs (core) | ✅ limité | ✅ | ✅ | ✅ |
 | Token chaining (`\|`) | ✅ | ✅ | ✅ | ✅ |
+| `module_load_include()` | ✅ | ⚠️ | ⚠️ déprécié 10.3 | ⚠️ déprécié |
 | `token_replace()` (D7 compat) | ✅ | ⚠️ | ❌ | ❌ |
 
 ## Auto-Amélioration

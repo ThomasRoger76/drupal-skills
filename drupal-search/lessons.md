@@ -53,3 +53,25 @@ Incidents Search API découverts en projet. Mis à jour après chaque résolutio
 - **Cause :** `facet_source_id` dans la config facette ne correspond pas à l'ID réel de la View
 - **Correct :** Format exact : `search_api:views_{display_type}__{view_id}__{display_id}` — vérifier avec `drush config:get facets.facet.ma_facette`
 - **Prévention :** Copier l'ID de source depuis l'UI Facets (onglet Facet source dans la config de la Vue)
+
+---
+
+## 2026-06-09 — Audit qualité (v1.1)
+
+### Processor custom converti en attribut PHP → plugin introuvable
+- **Symptôme :** Après réécriture d'un processor avec `#[SearchApiProcessor(...)]`, le plugin disparaît de la liste des processors de l'index
+- **Cause :** Le module Search API n'a pas migré vers les attributs PHP — la classe `Drupal\search_api\Attribute\SearchApiProcessor` n'existe pas. Seule l'annotation Doctrine `@SearchApiProcessor` est découverte.
+- **Correct :** Garder le docblock `/** @SearchApiProcessor(...) */`. Idem pour backends, datasources, trackers custom.
+- **Prévention :** Ne pas appliquer mécaniquement « D11 = attributs » aux plugins contrib. Vérifier l'existence de la classe `Attribute` avant de convertir.
+
+### Backend Elasticsearch : `elasticsearch_connector` ET `search_api_opensearch` activés ensemble
+- **Symptôme :** Conflit de mapping, serveur Search API qui ne se connecte plus
+- **Cause :** Les deux modules fournissent des backends concurrents (`elasticsearch` vs `opensearch`)
+- **Correct :** Choisir UN seul module. `elasticsearch_connector` 8.x pour ES/OpenSearch standard, `search_api_opensearch` pour AWS OpenSearch managé.
+- **Prévention :** Un seul backend ES/OpenSearch par projet. La connexion d'`elasticsearch_connector` 8.x est portée par le serveur Search API (plus d'entité « cluster » séparée).
+
+### URL Solr non quotée dans un curl shell
+- **Symptôme :** `curl ...?action=RELOAD&core=drupal` ne recharge rien, le shell lance un job en arrière-plan sur `core=drupal`
+- **Cause :** Le `&` non échappé est interprété par le shell
+- **Correct :** Toujours quoter les URLs contenant `&` ou `*` : `curl "http://.../cores?action=RELOAD&core=drupal"`
+- **Prévention :** Réflexe : toute URL avec paramètres entre guillemets doubles.

@@ -45,5 +45,25 @@ Bugs multilingues découverts en projet réel. Mis à jour après chaque inciden
 ### EntityQuery `->condition('langcode', 'fr')` — résultats manquants
 - **Symptôme :** Une requête cherchant des nœuds FR ne retourne rien même si des traductions FR existent
 - **Cause :** Certains nœuds ont `langcode = 'en'` (langue d'origine) mais ont une traduction FR — ils ne sont pas retournés par ce filtre
-- **Correct :** Pour chercher les nœuds QUI ONT une traduction FR (quelle que soit leur langue d'origine) : utiliser une join spécifique ou passer par Views avec Translation Language
-- **Prévention :** `->condition('langcode', 'fr')` filtre sur le langcode de l'original, pas des traductions. Pour les traductions, utiliser Views ou une query SQL directe sur la table de traduction.
+- **Correct :** Pour chercher les nœuds QUI ONT une traduction FR (quelle que soit leur langue d'origine) : utiliser une join spécifique ou passer par Views avec Translation Language. Pour ne cibler QUE les originaux : ajouter `->condition('default_langcode', 1)`.
+- **Prévention :** `->condition('langcode', 'fr')` filtre sur le langcode de l'original, pas des traductions. Pour les traductions, utiliser Views ou une query SQL directe sur la table de traduction. Voir le bloc dédié dans content-translation.md.
+
+---
+
+## 2026-06-09 — Audit qualité (v1.1)
+
+### Config de négociation de langue inexacte (`language.negotiation.yml`)
+- **Symptôme :** Un `drush cim` échoue ou n'applique pas la négociation — le fichier `language.negotiation.yml` est ignoré
+- **Cause :** Ce fichier n'existe pas dans Drupal core. La négociation s'écrit dans `language.types.yml` (clés `configurable` + `negotiation.<type>.enabled` / `method_weights`, méthodes nommées `language-url`, `language-session`...) et `language.negotiation.url.yml` (`source: path_prefix|domain`, `prefixes`, `domains`).
+- **Correct :** Voir multilingual-setup.md et language-negotiation.md (structure YAML corrigée).
+- **Prévention :** Toujours vérifier le nom réel d'un fichier de config avec `docker compose exec php drush config:get <name>` avant de l'écrire à la main.
+
+### Commandes drush sans préfixe Docker
+- **Symptôme :** `drush: command not found` ou exécution sur le mauvais environnement (host au lieu du conteneur)
+- **Cause :** Drush n'est disponible que dans le conteneur PHP — les commandes doivent passer par `docker compose exec php drush ...`
+- **Prévention :** Standard projet — JAMAIS `ddev`, JAMAIS `drush` nu. Toujours `docker compose exec php drush`.
+
+### TMGMT — assignation directe `$job->translator = ...`
+- **Symptôme :** Le traducteur n'est pas pris en compte sur le job
+- **Cause :** `tmgmt_job` est une entité ; les champs se définissent via `set()`, pas par accès direct à une propriété magique
+- **Correct :** `$job->set('translator', 'deepl');` et `$job->set('settings', []);`

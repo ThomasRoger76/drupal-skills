@@ -148,16 +148,25 @@ drush php:eval "
 ## Gestion des Bounces
 
 ```php
-// Configurer le Return-Path (adresse de rebond)
+// Configurer le From par défaut.
 // settings.php
 $config['symfony_mailer.settings']['default_from']['address'] = 'noreply@mon-site.com';
 
-// Return-Path différent de From (pour capturer les bounces)
-// Dans EmailBuilder::build()
+// Le From se définit dans l'EmailBuilder :
 public function build(EmailInterface $email): void {
-  $email->setFrom('noreply@mon-site.com');
-  $email->setReturnPath('bounces@mon-site.com');  // Adresse de gestion des bounces
+  $email->setFrom('noreply@mon-site.com', 'Mon Site');
 }
+
+// Le Return-Path (Sender / sender de l'Envelope) n'est PAS exposé par
+// EmailInterface. On agit sur l'objet Symfony\Component\Mime\Email sous-jacent
+// via un EmailProcessor (phase POST_RENDER) ou un EventSubscriber sur
+// MailerSendEvent, en surchargeant le Sender de l'Envelope :
+public function postRender(EmailInterface $email): void {
+  $email->getInner()->getHeaders()->addPathHeader('Return-Path', 'bounces@mon-site.com');
+}
+// En pratique, la plupart des providers (SendGrid, Mailgun, SES) réécrivent
+// eux-mêmes le Return-Path vers leur domaine de bounce — laisser le provider
+// gérer est souvent préférable à un override manuel.
 ```
 
 ```bash

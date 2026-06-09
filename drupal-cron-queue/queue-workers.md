@@ -13,8 +13,10 @@ description: Créer des QueueWorker plugins Drupal pour le traitement asynchrone
 namespace Drupal\mon_module\Plugin\QueueWorker;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Queue\Attribute\QueueWorker;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\Core\Queue\SuspendQueueException;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -22,14 +24,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Traite les imports RSS en arrière-plan.
  *
- * @QueueWorker(
- *   id = "mon_module_rss_import",
- *   title = @Translation("Import RSS"),
- *   cron = {"time" = 60}   ← max 60 secondes par run de cron
- * )
+ * D10.2+ / D11 : attribut PHP standard (l'annotation @QueueWorker est dépréciée).
+ * cron.time = budget max en secondes consacré à cette queue par run de cron.
  */
-// D11 : #[QueueWorker(id: "mon_module_rss_import", title: new TranslatableMarkup("Import RSS"), cron: ["time" => 60])]
-
+#[QueueWorker(
+  id: 'mon_module_rss_import',
+  title: new TranslatableMarkup('Import RSS'),
+  cron: ['time' => 60],
+)]
 class RssImportWorker extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   public function __construct(
@@ -169,9 +171,11 @@ nohup drush queue:run mon_module_rss_import --time-limit=3600 > /tmp/queue.log 2
 ```php
 // Comportements possibles dans processItem() :
 // 1. return → item supprimé (succès ou abandon volontaire)
-// 2. throw Exception → item remis en queue (sera retenté au prochain run)
-// 3. throw SuspendQueueException → queue entière suspendue temporairement
-// 4. throw RequeueException → remis en queue avec un délai (si supporté)
+// 2. throw \Exception → item remis en queue après expiration du lease (retry au prochain run)
+// 3. throw RequeueException → item remis en queue IMMÉDIATEMENT (rejouable dès ce run)
+// 4. throw DelayedRequeueException → item verrouillé N secondes avant retry (backoff)
+//    Nécessite une queue implémentant DelayableQueueInterface (DatabaseQueue le fait).
+// 5. throw SuspendQueueException → queue entière suspendue pour ce run (service externe down)
 
 // Pattern de retry avec compteur
 public function processItem($data): void {
@@ -192,6 +196,22 @@ public function processItem($data): void {
     \Drupal::queue('mon_module_rss_import')->createItem($data);
     // Ne pas relancer l'exception (item original sera supprimé après return)
     $this->logger->warning('Retry @n pour @id', ['@n' => $data['attempts'], '@id' => $data['id'] ?? '?']);
+  }
+}
+```
+
+```php
+// Backoff natif sans recréer l'item : DelayedRequeueException (D9.3+).
+// L'item reste en queue, verrouillé pendant le délai → pas de retry en boucle serrée.
+use Drupal\Core\Queue\DelayedRequeueException;
+
+public function processItem($data): void {
+  try {
+    $this->callExternalApi($data);
+  }
+  catch (\GuzzleHttp\Exception\ServerException $e) {
+    // 5xx temporaire : ne pas marmarteler l'API, attendre 5 min avant retry.
+    throw new DelayedRequeueException(300, 'API 5xx, retry différé : ' . $e->getMessage());
   }
 }
 ```

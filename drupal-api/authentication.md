@@ -5,14 +5,22 @@ description: Authentification pour les APIs Drupal headless - Simple OAuth (clie
 
 # Authentification API — Simple OAuth & JWT
 
+> **Convention environnement (ce repo) : Docker natif, jamais DDEV.**
+> Préfixer toute commande par `docker compose exec php` (ex. `docker compose exec php drush ...`,
+> `docker compose exec php composer ...`). Les exemples ci-dessous sont écrits avec ce préfixe.
+
 ## Installation Simple OAuth
 
 ```bash
-composer require drupal/simple_oauth
-drush en simple_oauth -y
+docker compose exec php composer require drupal/simple_oauth
+docker compose exec php drush en simple_oauth -y
 
-# Générer les clés RSA (OBLIGATOIRE)
-drush php:eval "
+# Générer les clés RSA (OBLIGATOIRE) — depuis Drupal 6.x de Simple OAuth, préférer la commande dédiée :
+docker compose exec php drush simple-oauth:generate-keys ../oauth-keys
+# (équivalent UI : /admin/config/people/simple_oauth → "Generate keys")
+
+# Alternative manuelle (php:eval) si la commande n'est pas disponible :
+docker compose exec php drush php:eval "
   \$config = \Drupal::configFactory()->getEditable('simple_oauth.settings');
   \$key_dir = \Drupal::root() . '/../oauth-keys/';
   if (!is_dir(\$key_dir)) { mkdir(\$key_dir, 0700); }
@@ -245,6 +253,30 @@ parameters:
     exposedHeaders: false
     maxAge: false
     supportsCredentials: true    # Requis pour les cookies de session
+```
+
+**CORS par environnement (jamais `*` en prod) — `localhost` ne doit pas fuiter en production.**
+`services.yml` ne supporte pas les variables. Garder une whitelist stricte par environnement en
+surchargeant le paramètre dans `settings.php` (ou `settings.local.php` en dev) :
+
+```php
+// settings.php — origins pilotés par variable d'environnement, validés par env.
+$settings['container_yamls'][] = $app_root . '/' . $site_path . '/services.yml';
+
+$origins = array_filter(array_map('trim', explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '')));
+if ($origins) {
+  // Écrase la liste statique du services.yml — aucune origin localhost en prod.
+  $config['system.cors']['allowedOrigins'] = $origins; // si géré en config
+}
+
+// Pratique courante : config_split (split "dev" vs "prod") OU settings.local.php
+// pour n'autoriser http://localhost:3000 qu'en développement.
+```
+
+En dev uniquement, `settings.local.php` ajoute les origins locales :
+```php
+// settings.local.php (non commité, chargé seulement en dev)
+$config['cors.config']['allowedOrigins'][] = 'http://localhost:3000';
 ```
 
 ---

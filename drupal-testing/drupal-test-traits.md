@@ -54,7 +54,8 @@ weitzman/drupal-test-traits
 <phpunit
   bootstrap="vendor/autoload.php"
   colors="true"
-  verbose="true"
+  cacheDirectory=".phpunit.cache"
+  displayDetailsOnTestsThatTriggerWarnings="true"
   failOnWarning="true">
 
   <testsuites>

@@ -164,16 +164,18 @@ migration_dependencies:
 // src/Plugin/migrate/source/LocalImageFiles.php
 namespace Drupal\mon_module\Plugin\migrate\source;
 
+use Drupal\migrate\Attribute\MigrateSource;
 use Drupal\migrate\Plugin\migrate\source\SourcePluginBase;
-use Drupal\migrate\Row;
 
 /**
  * Source plugin pour les images d'un dossier local.
  *
- * @MigrateSource(
- *   id = "local_image_files"
- * )
+ * D11 : attribut PHP #[MigrateSource] (l'annotation @MigrateSource est
+ * dépréciée). Disponible depuis D10.2.
  */
+#[MigrateSource(
+  id: 'local_image_files',
+)]
 class LocalImageFiles extends SourcePluginBase {
 
   public function getIds(): array {

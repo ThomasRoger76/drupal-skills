@@ -39,9 +39,7 @@ final class PrixCalculatorTest extends UnitTestCase {
     $this->calculator = new PrixCalculator();
   }
 
-  /**
-   * @covers ::calculer
-   */
+  #[\PHPUnit\Framework\Attributes\CoversMethod('calculer')]
   public function testCalculerPrixAvecTaxe(): void {
     $result = $this->calculator->calculer(100.0, 0.20);
     $this->assertEquals(120.0, $result);

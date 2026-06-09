@@ -61,3 +61,17 @@ Après chaque incident Webform :
 - **Cause :** Le sélecteur jQuery dans `#states` ne correspond pas au nom HTML du champ (Webform ajoute un préfixe)
 - **Correct :** Inspecter l'attribut `name` du champ HTML avec les DevTools → utiliser exactement `:input[name="EXACT_NAME"]`
 - **Prévention :** Tester les `#states` en mode preview avant d'activer le formulaire
+
+### 2026-06-08 — Plugin handler/élément ignoré en D11 — annotation Doctrine dépréciée
+
+- **Symptôme :** Sur un projet D11 neuf, un `WebformHandler`/`WebformElement` custom déclenche un warning de dépréciation, ou n'est pas découvert selon la version de Webform
+- **Cause :** Le plugin utilisait l'annotation `@WebformHandler` / `@WebformElement` (Doctrine), dépréciée depuis Webform 6.2 au profit des attributs PHP natifs
+- **Correct :** Migrer vers `#[\Drupal\webform\Attribute\WebformHandler(...)]` / `#[WebformElement(...)]` avec `new TranslatableMarkup(...)` pour les labels, et `declare(strict_types=1)`
+- **Prévention :** Sur D10.2+/D11, toujours déclarer les plugins Webform en attributs PHP. Réserver l'annotation aux bases de code D9 encore maintenues
+
+### 2026-06-08 — `\Drupal::service('http_client')` en dur dans un handler — non testable
+
+- **Symptôme :** Impossible de mocker le client HTTP dans un test unitaire du handler ; couplage fort au container global
+- **Cause :** Appel `\Drupal::service()` directement dans `postSave()` au lieu d'une dépendance injectée
+- **Correct :** Implémenter `create(ContainerInterface $container, ...)` sur le handler (pattern natif de `WebformHandlerBase`) et stocker `$container->get('http_client')` dans une propriété typée
+- **Prévention :** Dans toute classe de plugin (handler, élément), injecter les services via `create()` — jamais `\Drupal::service()` dans la logique métier (cf. api-conventions)

@@ -201,18 +201,22 @@ Les SDC sont **le système de composants officiel de Drupal 11** — ils remplac
 mon_theme/components/
   card/
     card.component.yml   # Schéma des props (OBLIGATOIRE)
-    card.html.twig       # Template du composant
+    card.twig            # Template du composant — DOIT être {id}.twig, PAS .html.twig
     card.css             # CSS scopé au composant
     card.js              # JS comportement Drupal
   hero/
     hero.component.yml
-    hero.html.twig
+    hero.twig
     hero.css
   button/
     button.component.yml
-    button.html.twig
+    button.twig
     button.css
 ```
+
+> **⚠️ Nommage du template SDC :** le fichier Twig doit s'appeler exactement comme l'ID du
+> composant suivi de `.twig` (ex. `card.twig`) — **jamais** `card.html.twig`. Avec l'extension
+> `.html.twig`, Drupal ne découvre pas le composant et le rendu `{% component %}` échoue.
 
 ### `card.component.yml` — Schéma complet des props
 
@@ -250,7 +254,7 @@ slots:
     title: Contenu du pied de carte (optionnel)
 ```
 
-### `card.html.twig` — Template du composant
+### `card.twig` — Template du composant
 
 ```twig
 {#
@@ -332,13 +336,17 @@ function mon_theme_preprocess_node(array &$variables): void {
 
 ### Activer les SDC
 
-```bash
-# D10.3+ : le module SDC est dans core mais pas actif par défaut
-docker compose exec php drush en sdc -y
+Depuis Drupal **10.3**, les SDC sont **stables et intégrés au core** : aucun module à activer
+(`drush en sdc` échoue — le composant n'est pas un module installable séparément). Les composants
+sont détectés automatiquement dès qu'un dossier `components/` valide existe dans le thème.
 
-# D11 : stable et activé par défaut dans les nouveaux sites
+```bash
+# D10.3+ / D11 : il suffit de vider le cache pour que Drupal découvre les composants
 docker compose exec php drush cr
 ```
+
+> En D10.1 / D10.2, les SDC étaient un module core **expérimental** activable via `drush en sdc -y`.
+> Cette étape n'est plus nécessaire (ni possible) à partir de D10.3.
 
 ### Debugging SDC
 
@@ -358,5 +366,3 @@ docker compose exec php drush php:eval "print_r(\Drupal::service('plugin.manager
 | Props non typées dans `.component.yml` | Toujours déclarer `type:` + `required:` | Validation au rendu |
 | SDC sans slot pour le contenu variable | Utiliser `slots:` pour le contenu dynamique | Composabilité |
 | Un seul gros composant `page` | Décomposer : `header`, `card`, `button` | Réutilisabilité |
-
-Activer : `docker compose exec php drush en sdc -y` (module core en D10.3+, stable et recommandé D11)

@@ -1,6 +1,6 @@
 ---
 name: drupal-gin
-description: Use when configuring the Gin admin theme for Drupal - installing and setting Gin as the default admin theme, creating a Gin sub-theme for custom branding (CSS custom variables --gin-color-primary for colors, logo, custom CSS overrides), configuring Gin settings (toolbar position horizontal/sidebar/condensed, navigation mode, accent color, dark mode), using hook_toolbar_alter() to add custom navigation items with SVG icons, customizing the content editing form layout with hook_form_NODE_TYPE_edit_form_alter() to move fields to the sidebar meta panel, installing gin_login for branded login page, configuring the Gin navigation module for the new sidebar navigation in D10.3+, or migrating from Adminimal/Seven/Claro to Gin in Drupal 9-11+
+description: Use when configuring the Gin admin theme for Drupal - installing and setting Gin as the default admin theme, creating a Gin sub-theme for custom branding (CSS custom variables --gin-color-primary for colors, logo, custom CSS overrides), configuring Gin settings (classic_toolbar horizontal/vertical/new, navigation mode, accent color, dark mode), using hook_toolbar_alter() to add custom navigation items with SVG icons, customizing the content editing form layout with hook_form_NODE_TYPE_edit_form_alter() to move fields to the sidebar meta panel, installing gin_login for branded login page, configuring the Gin navigation module for the new sidebar navigation in D10.3+, or migrating from Adminimal/Seven/Claro to Gin in Drupal 9-11+
 ---
 
 # Drupal Gin Admin Theme — Référence Complète
@@ -38,11 +38,11 @@ Gin (contrib) :
 | Besoin | Outil | Référence |
 |--------|-------|-----------|
 | Installer Gin | `composer require drupal/gin drupal/gin_toolbar` | [gin-setup.md](gin-setup.md) |
-| Configurer la nouvelle navigation sidebar (D10.3+) | Gin settings → Toolbar → Sidebar | [gin-navigation.md](gin-navigation.md) |
+| Configurer la nouvelle navigation sidebar (D10.3+) | `drush en navigation -y` + `classic_toolbar: new` | [gin-navigation.md](gin-navigation.md) |
 | Personnaliser les items de navigation Gin | `hook_toolbar_alter()` | [gin-navigation.md](gin-navigation.md) |
 | Icône custom dans la sidebar navigation | CSS background-image sur `.toolbar-icon-NOM` | [gin-navigation.md](gin-navigation.md) |
 | Définir Gin comme thème admin | `drush config:set system.theme admin gin` | [gin-setup.md](gin-setup.md) |
-| Activer la navigation sidebar | Gin settings → Toolbar → Classic Gin Navigation | [gin-setup.md](gin-setup.md) |
+| Activer la toolbar verticale Gin (sans module core) | `classic_toolbar: vertical` (fournie par gin_toolbar) | [gin-setup.md](gin-setup.md) |
 | Activer le mode sombre | Gin settings → Appearance → Dark mode | [gin-setup.md](gin-setup.md) |
 | Choisir la couleur d'accent | Gin settings → Accent color (preset ou custom) | [gin-setup.md](gin-setup.md) |
 | Logo custom dans l'admin | Gin settings → Logo → Custom logo | [gin-setup.md](gin-setup.md) |
@@ -59,10 +59,10 @@ Gin (contrib) :
 | **Icône custom SVG dans la sidebar navigation** | CSS `.toolbar-icon-MON-MODULE::before { background-image: url(...) }` | [gin-navigation.md](gin-navigation.md) |
 | **Déplacer des champs en sidebar via PHP** | `hook_form_node_TYPE_edit_form_alter()` + `$form['field']['#group'] = 'meta'` | [gin-subtheme.md](gin-subtheme.md) |
 | **Gin Login — brander la page de connexion** | `composer require drupal/gin_login` + config logo | [gin-setup.md](gin-setup.md) |
-| Gin sidebar vs condensed vs horizontal | Gin settings → Toolbar → Layout options | [gin-navigation.md](gin-navigation.md) |
+| `classic_toolbar` : horizontal / vertical / new | Gin settings → Navigation | [gin-navigation.md](gin-navigation.md) |
 | Breadcrumbs custom dans la navigation Gin | `BreadcrumbBuilder` service avec priority 100 | [gin-navigation.md](gin-navigation.md) |
 | **Référence complète CSS Variables Gin** | `--gin-color-primary`, `--gin-color-button`, `--gin-bg-header`, `--gin-font-family` | [gin-subtheme.md](gin-subtheme.md) |
-| **Forcer le mode sombre par défaut** | `gin.settings.yml` → `preset: dark` + `classic_toolbar: false` | [gin-setup.md](gin-setup.md) |
+| **Forcer le mode sombre par défaut** | `gin.settings.yml` → `enable_darkmode: '1'` (0=off, 1=on, 2=auto) | [gin-setup.md](gin-setup.md) |
 | **Gin + Content Moderation (badge d'état dans le formulaire)** | Compatible natif — les états apparaissent dans le panneau meta Gin | [gin-subtheme.md](gin-subtheme.md) |
 | **Gin + Paragraphs — afficher les champs para dans la sidebar** | `hook_form_node_TYPE_edit_form_alter()` → `$form['field_paragraphs']['#group'] = 'meta'` | [gin-subtheme.md](gin-subtheme.md) |
 | **Gin + field_group — onglets / accordéons dans les formulaires** | Module `field_group` ≥ 3.4 compatible Gin — layout `tabs`, `accordion`, `fieldset` | [gin-subtheme.md](gin-subtheme.md) |
@@ -74,25 +74,27 @@ Gin (contrib) :
 | **Migrer de Claro → Gin** | `drush config:set system.theme admin gin` + exporter gin.settings.yml + créer sous-thème | [gin-setup.md](gin-setup.md) |
 | **Migrer d'Adminimal → Gin** | Désinstaller adminimal, installer gin + gin_toolbar, vérifier les surcharges CSS custom | [gin-setup.md](gin-setup.md) |
 | **Gin + sélecteur de langue dans la navigation** | Module `language` → bloc `language_block` positionné dans toolbar Gin | [gin-navigation.md](gin-navigation.md) |
-| **Personnaliser la couleur du header admin par environnement** | `$config['gin.settings']['preset']` dans `settings.local.php` → rouge en prod, bleu en staging | [gin-setup.md](gin-setup.md) |
+| **Personnaliser la couleur d'accent par environnement** | `$config['gin.settings']['preset_accent_color'] = 'red';` dans `settings.local.php` → rouge en prod, bleu en staging | [gin-setup.md](gin-setup.md) |
 
 ## Migration vers Gin
 
 ### Depuis Claro (recommandé D10/D11)
 ```bash
 composer require drupal/gin drupal/gin_toolbar drupal/gin_login
-drush config:set system.theme admin gin
-drush config:set system.theme login gin_login  # optionnel
+drush theme:enable gin -y
+drush config:set system.theme admin gin -y
+drush en gin_toolbar gin_login -y   # gin_login = module, pas un thème (aucune clé system.theme login)
 drush cr
-drush cex  # committer gin.settings.yml
+drush cex -y  # committer gin.settings.yml + system.theme.yml + core.extension.yml
 ```
 
 ### Depuis Seven / Adminimal (D9+)
-1. Désinstaller l'ancien thème : `drush theme:uninstall seven`
-2. Supprimer les surcharges CSS dans `settings.php` (`ADMINIMAL_*` variables)
-3. Installer Gin + créer un sous-thème pour les customisations
-4. Inspecter `hook_form_alter` qui ciblaient `.adminimal-*` — renommer en `.gin-*`
-5. Vérifier que `field_group` est ≥ 3.4 (compatibilité Gin requise)
+1. Installer Gin et le définir admin AVANT de désinstaller l'ancien (éviter un fallback Stark)
+2. Désinstaller l'ancien : `drush theme:uninstall adminimal_theme` (puis seven si présent)
+3. Créer un sous-thème Gin pour les customisations (jamais modifier Gin)
+4. Inspecter le CSS/JS ciblant `.adminimal-*` / `#toolbar-*` : les sélecteurs changent
+   sous Gin (`--gin-*`, `.gin--*`) — réécrire, ne pas simplement renommer
+5. Vérifier `field_group` ≥ 3.4 (compatibilité Gin requise)
 
 ### Checklist post-migration
 - [ ] Exporter `gin.settings.yml` et le committer
@@ -117,11 +119,11 @@ drush cex  # committer gin.settings.yml
 
 | Feature | D9 | D10 | D11 |
 |---------|----|----|-----|
-| Gin module | ✅ | ✅ | ✅ |
-| Gin Navigation (sidebar) | contrib | ✅ core-like | ✅ |
-| Gin Login | contrib | contrib | contrib |
+| Gin module (`drupal/gin`) | ✅ | ✅ | ✅ |
+| Gin Toolbar (`drupal/gin_toolbar`, contrib séparé) | ✅ | ✅ | ✅ |
+| Module Navigation core (sidebar moderne, `classic_toolbar: new`) | ❌ | ✅ 10.3+ (exp.) | ✅ stable |
+| Gin Login (`drupal/gin_login`, contrib) | ✅ | ✅ | ✅ |
 | Mode sombre | ✅ | ✅ | ✅ |
-| D11 support day-1 | ✅ | ✅ | ✅ |
 
 ## Auto-Amélioration
 

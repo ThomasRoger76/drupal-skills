@@ -121,30 +121,58 @@ handlers:
 
 ## Handler Custom — WebformHandlerBase
 
+> **Drupal 11 / Webform 6.2+ : attribut PHP, pas annotation.** Webform 6.2 (compatible D10.2+/D11)
+> remplace l'annotation Doctrine `@WebformHandler` par l'attribut PHP `#[WebformHandler]`
+> (`Drupal\webform\Attribute\WebformHandler`). L'annotation reste tolérée mais est dépréciée — sur un
+> projet D11 neuf, utiliser systématiquement l'attribut. Injecter le `http_client` via `create()` plutôt
+> que `\Drupal::service()`.
+
 ```php
 <?php
+
+declare(strict_types=1);
+
 // src/Plugin/WebformHandler/CrmSyncHandler.php
 namespace Drupal\mon_module\Plugin\WebformHandler;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\webform\Attribute\WebformHandler;
 use Drupal\webform\Plugin\WebformHandlerBase;
+use Drupal\webform\Plugin\WebformHandlerInterface;
 use Drupal\webform\WebformSubmissionInterface;
 use GuzzleHttp\ClientInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Synchronise les soumissions avec le CRM.
- *
- * @WebformHandler(
- *   id = "mon_module_crm_sync",
- *   label = @Translation("Sync CRM"),
- *   category = @Translation("Mon Module"),
- *   description = @Translation("Envoie les données au CRM et crée un lead."),
- *   cardinality = \Drupal\webform\Plugin\WebformHandlerInterface::CARDINALITY_SINGLE,
- *   results = \Drupal\webform\Plugin\WebformHandlerInterface::RESULTS_PROCESSED,
- *   submission = \Drupal\webform\Plugin\WebformHandlerInterface::SUBMISSION_REQUIRED,
- * )
  */
+#[WebformHandler(
+  id: 'mon_module_crm_sync',
+  label: new TranslatableMarkup('Sync CRM'),
+  category: new TranslatableMarkup('Mon Module'),
+  description: new TranslatableMarkup('Envoie les données au CRM et crée un lead.'),
+  cardinality: WebformHandlerInterface::CARDINALITY_SINGLE,
+  results: WebformHandlerInterface::RESULTS_PROCESSED,
+  submission: WebformHandlerInterface::SUBMISSION_REQUIRED,
+)]
 class CrmSyncHandler extends WebformHandlerBase {
+
+  /**
+   * Le client HTTP injecté.
+   */
+  protected ClientInterface $httpClient;
+
+  /**
+   * {@inheritdoc}
+   *
+   * Injection de dépendances — jamais \Drupal::service() dans la logique métier.
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
+    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->httpClient = $container->get('http_client');
+    return $instance;
+  }
 
   /**
    * Formulaire de configuration du handler.
@@ -156,7 +184,7 @@ class CrmSyncHandler extends WebformHandlerBase {
       '#type' => 'textfield',
       '#title' => $this->t('CRM API URL'),
       '#default_value' => $this->configuration['crm_api_url'] ?? '',
-      '#required' => true,
+      '#required' => TRUE,
     ];
 
     $form['crm_api_key'] = [
@@ -191,8 +219,7 @@ class CrmSyncHandler extends WebformHandlerBase {
     ];
 
     try {
-      $client = \Drupal::service('http_client');
-      $response = $client->post($api_url, [
+      $response = $this->httpClient->post($api_url, [
         'json' => $payload,
         'headers' => ['Authorization' => 'Bearer ' . $api_key],
         'timeout' => 10,

@@ -133,9 +133,15 @@ function mon_module_page_attachments(array &$page): void {
       ],
       'schema_org_' . $node->bundle() . '_' . $node->id(),
     ];
+
+    // Indispensable : le JSON-LD dépend du nœud. Sans ce cache tag, la page
+    // mise en cache servirait un Schema.org obsolète après édition du nœud.
+    $page['#cache']['tags'][] = 'node:' . $node->id();
   }
 }
 ```
+
+> **Piège cache (Dynamic Page Cache / Page Cache).** Tout JSON-LD construit à partir d'une entité **doit** propager les `#cache['tags']` de cette entité (`node:ID`, `media:ID`…), sinon Drupal sert un balisage figé après modification du contenu. Pour un balisage qui varie selon l'utilisateur ou la langue, ajouter aussi `#cache['contexts']` (`url.path`, `languages:language_interface`).
 
 ---
 
@@ -172,6 +178,9 @@ function mon_module_page_attachments(array &$page): void {
       ],
       'schema_org_breadcrumb',
     ];
+
+    // Le fil d'Ariane varie selon l'URL → cache context url.path obligatoire.
+    $page['#cache']['contexts'][] = 'url.path';
   }
 }
 ```
@@ -181,8 +190,13 @@ function mon_module_page_attachments(array &$page): void {
 ## Organization — Données Globales du Site
 
 ```php
-// Dans hook_preprocess_html — ajouter Organization sur toutes les pages
+// Dans hook_preprocess_html — ajouter Organization sur les pages front
 function mon_module_preprocess_html(array &$variables): void {
+  // Ne pas polluer les pages d'admin avec le balisage Organization.
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
   $config = \Drupal::config('system.site');
   $request = \Drupal::request();
 

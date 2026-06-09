@@ -91,6 +91,34 @@ Pas encore de bugs en usage réel. Les points suivants sont des pièges connus d
 - **Correct :** `$node = \Drupal::service('entity.repository')->getTranslationFromContext($node);`
 - **Prévention :** Sur tout site multilingue, toujours appliquer `getTranslationFromContext()` + ajouter `'languages:language_interface'` au cache contexts
 
+### Template SDC nommé `card.html.twig` — composant non découvert
+- **Composant :** theme-anatomy.md / bem-storybook.md
+- **Symptôme :** `{% component 'mon_theme:card' %}` lève "Component not found" malgré un dossier `components/card/` valide
+- **Cause :** Le template d'un SDC doit s'appeler `{id}.twig` (ex. `card.twig`). Avec l'extension `.html.twig`, Drupal ne reconnaît pas le composant.
+- **Correct :** `card.twig`, `hero.twig`, `button.twig` — jamais `.html.twig` dans `components/`
+- **Prévention :** Réserver `.html.twig` aux templates de theme hook classiques (`templates/`) ; les SDC utilisent `.twig` court
+
+### `drush en sdc` échoue en D10.3+ / D11
+- **Composant :** theme-anatomy.md
+- **Symptôme :** `drush en sdc -y` → "sdc does not exist" / aucun module à activer
+- **Cause :** Depuis D10.3, les SDC sont stables et intégrés au core — il n'y a plus de module `sdc` installable. (Le module expérimental n'existait qu'en D10.1/D10.2.)
+- **Correct :** Aucune activation requise — `drush cr` suffit pour découvrir les composants
+- **Prévention :** Ne pas générer `drush en sdc` dans les procédures D10.3+/D11
+
+### `item.is_currentPage` inexistant dans le template menu
+- **Composant :** twig3-accessibility.md
+- **Symptôme :** `aria-current="page"` jamais appliqué sur l'item de menu actif
+- **Cause :** Les items du menu Drupal n'exposent pas `is_currentPage`. Les variables réelles sont `in_active_trail`, `is_expanded`, `is_collapsed`, `below`.
+- **Correct :** `{% if item.in_active_trail %}aria-current="page"{% endif %}`
+- **Prévention :** `dump(item)` dans `menu.html.twig` pour vérifier les variables réellement disponibles
+
+### `drush theme:enable` déprécié — utiliser `theme:install`
+- **Composant :** agents/theme-generator.md
+- **Symptôme :** Avertissement de dépréciation, voire échec selon la version de Drush
+- **Cause :** `drush theme:enable` est déprécié depuis Drush 11 au profit de `drush theme:install`
+- **Correct :** `docker compose exec php drush theme:install mon_theme -y`
+- **Prévention :** Préférer `theme:install` dans toute nouvelle procédure
+
 ### `drush cr` insuffisant après modification du `.theme`
 - **Symptôme :** Les changements de preprocess ne prennent pas effet
 - **Cause :** Le cache Twig ET le cache des fonctions PHP sont indépendants — parfois `drush cr` ne suffit pas

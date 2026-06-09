@@ -68,9 +68,10 @@ echo \$style->buildUrl(\$uri) . PHP_EOL;
 "
 
 # Vider le cache des dérivés d'image (après modification d'un style)
-drush php:eval "image_path_flush('public://');"
-# OU
-drush image-flush --all
+# Flush d'un style précis (régénère ses dérivés au prochain accès)
+drush php:eval "\Drupal::entityTypeManager()->getStorage('image_style')->load('large')->flush();"
+# OU tous les styles
+drush image:flush --all
 ```
 
 ---
@@ -131,25 +132,28 @@ Via Drush (import en masse depuis un dossier) :
 
 ```php
 // Script de bulk upload depuis un dossier
+use Drupal\Core\File\FileExists;
+use Drupal\media\Entity\Media;
+
 function bulk_import_images(string $directory): void {
   $files = glob($directory . '/*.jpg');
-  
+
   foreach ($files as $file_path) {
     $filename = basename($file_path);
     $uri = 'public://imports/' . $filename;
-    
-    // Copier le fichier dans le répertoire public
-    \Drupal::service('file_system')->copy($file_path, $uri, \Drupal\Core\File\FileSystemInterface::EXISTS_REPLACE);
-    
-    // Créer l'entité File
-    $file = \Drupal\file\Entity\File::create([
-      'uri' => $uri,
-      'status' => 1,
-    ]);
-    $file->save();
-    
+
+    // Copier le fichier ET créer l'entité File managée en une étape.
+    // file.repository->copy() retourne directement le File (déplacement
+    // physique + entité). FileExists::Replace remplace le déprécié
+    // FileSystemInterface::EXISTS_REPLACE (D10.3+).
+    $file = \Drupal::service('file.repository')->copy(
+      $file_path,
+      $uri,
+      FileExists::Replace,
+    );
+
     // Créer l'entité Media
-    $media = \Drupal\media\Entity\Media::create([
+    $media = Media::create([
       'bundle' => 'image',
       'name' => pathinfo($filename, PATHINFO_FILENAME),
       'status' => 1,
@@ -199,7 +203,7 @@ echo count(\$mids) . ' médias non publiés' . PHP_EOL;
 "
 
 # Régénérer les dérivés d'image après changement de style
-drush image-flush --all
+drush image:flush --all
 
 # Vérifier les permissions (les utilisateurs voient-ils la Media Library ?)
 # → /admin/people/permissions → Media Library → "Use Media overview"

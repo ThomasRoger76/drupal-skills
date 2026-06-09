@@ -46,17 +46,23 @@ Guide de référence pour les décisions d'architecture de contenu Drupal 8-11+ 
 | Champ calculé (non stocké) | **Computed field** via `#[FieldType]` | Valeur calculée à la lecture | [custom-entities.md](custom-entities.md) |
 | Entity avec plusieurs bundles (comme node types) | **ContentEntityBase** + bundle entity | Pattern Drupal natif | [custom-entities.md](custom-entities.md) |
 | Accès granulaire par entité (multi-tenant) | **AccessControlHandler** custom | + éventuellement Group module | [custom-entities.md](custom-entities.md) |
-| **Page builder drag-and-drop pour les éditeurs** | `drupal/dxpr_builder` — alternative visuelle à Layout Builder | [layout-builder.md](layout-builder.md) |
-| **Paragraphs en sections avec colonnes** | `drupal/layout_paragraphs` — Layout Builder UI dans les Paragraphs | [paragraphs.md](paragraphs.md) |
-| **Transitions de statut planifiées** | `drupal/scheduled_transitions` — publier/dépublier à une date | [nodes-content-types.md](nodes-content-types.md) |
+
+## Modules Contrib & Approches Utiles
+
+> Contrib d'abord : ces modules couvrent des besoins récurrents sans code custom.
+
+| Besoin | Module / approche | Référence |
+|--------|-------------------|-----------|
+| Page builder drag-and-drop / Paragraphs en sections avec colonnes | `drupal/layout_paragraphs` — UI type Layout Builder dans les Paragraphs, contrib mature et libre | [paragraphs.md](paragraphs.md) |
+| Transitions de statut planifiées (publier/dépublier à une date) | `drupal/scheduled_transitions` | [nodes-content-types.md](nodes-content-types.md) |
 | Verrouiller un contenu en cours d'édition | `drupal/content_lock` — empêche l'édition simultanée | [nodes-content-types.md](nodes-content-types.md) |
 | Cloner un nœud / une entité | `drupal/entity_clone` — duplication via UI ou programmatique | [nodes-content-types.md](nodes-content-types.md) |
-| **Workflow complexe multi-étapes (ECA)** | `drupal/eca` — Event-Condition-Action sans code, remplace Rules en D10/D11 | [nodes-content-types.md](nodes-content-types.md) |
-| **Archiver du contenu après X jours automatiquement** | `drupal/eca` + Timer event → transition vers état `archived` | [nodes-content-types.md](nodes-content-types.md) |
-| **Indexer une custom entity dans Search API** | ContentEntity → automatiquement détectée par Search API. Pour une source non-Entity : implémenter `@SearchApiDatasource` plugin | [custom-entities.md](custom-entities.md) |
-| **Révisions avec diff visuel (avant/après)** | `drupal/diff` — affiche les changements entre deux révisions | [nodes-content-types.md](nodes-content-types.md) |
-| **Versionner le contenu comme du code (git-like)** | Content Moderation + Revisions + `drupal/workspaces` (staging en DB) | [nodes-content-types.md](nodes-content-types.md) |
-| **Multi-step content approval workflow** | Content Moderation → états custom (draft → in_review → approved → published) | [nodes-content-types.md](nodes-content-types.md) |
+| Workflow complexe multi-étapes sans code | `drupal/eca` — Event-Condition-Action, remplace Rules en D10/D11 | [nodes-content-types.md](nodes-content-types.md) |
+| Archiver du contenu après X jours automatiquement | `drupal/eca` + Timer event → transition vers état `archived` | [nodes-content-types.md](nodes-content-types.md) |
+| Indexer une custom entity dans Search API | ContentEntity détectée automatiquement ; source non-Entity → plugin `@SearchApiDatasource` | [custom-entities.md](custom-entities.md) |
+| Révisions avec diff visuel (avant/après) | `drupal/diff` | [nodes-content-types.md](nodes-content-types.md) |
+| Versionner le contenu comme du code (git-like) | Content Moderation + Revisions + `drupal/workspaces` (staging en DB) | [nodes-content-types.md](nodes-content-types.md) |
+| Multi-step content approval workflow | Content Moderation → états custom (draft → in_review → approved → published) | [nodes-content-types.md](nodes-content-types.md) |
 
 ## Paragraphs vs Layout Builder — Tableau Décisionnel
 

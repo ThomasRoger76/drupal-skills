@@ -30,28 +30,30 @@ Référentiel complet des Single Directory Components Drupal 10.3+/D11 : structu
 | Ajouter du JS à un composant | `mon-composant.js` avec `Drupal.behaviors` | [sdc-setup.md](sdc-setup.md) |
 | Composer des composants imbriqués | `{% include %}` dans le `.twig` d'un autre composant | [sdc-integration.md](sdc-integration.md) |
 | Documenter visuellement dans Storybook | `*.stories.js` dans le répertoire | [sdc-storybook.md](sdc-storybook.md) |
-| Debug des erreurs de validation de props | `DRUPAL_SDC_DEBUG=1` ou `services.yml` | [sdc-setup.md](sdc-setup.md) |
+| Debug des erreurs de validation de props | `services.yml` → `parameters.sdc.enforce_schemas: true` | [sdc-setup.md](sdc-setup.md) |
 | SDC dans un module (pas un thème) | `web/modules/custom/mon_module/components/` | [sdc-integration.md](sdc-integration.md) |
 | SDC avec Layout Builder — block plugin | Classe Block PHP qui render un composant SDC | [sdc-layout-builder.md](sdc-layout-builder.md) |
 | SDC comme région de layout (Section plugin) | `LayoutBase::build()` qui retourne un `#type: component` | [sdc-layout-builder.md](sdc-layout-builder.md) |
 | Props SDC configurables dans l'UI Layout Builder | `blockForm()` + `blockSubmit()` + `#type: component` | [sdc-layout-builder.md](sdc-layout-builder.md) |
-| Activer SDC en dev (validation stricte) | `services.yml` → `sdc.debug: true` | [sdc-setup.md](sdc-setup.md) |
-| Lister tous les composants disponibles | `drush php:eval "print_r(\Drupal::service('sdc.component_registry')->getAllComponents());"` | [sdc-setup.md](sdc-setup.md) |
+| Activer SDC en dev (validation stricte) | `services.yml` → `sdc.enforce_schemas: true` | [sdc-setup.md](sdc-setup.md) |
+| Lister tous les composants disponibles | `drush php:eval "print_r(array_keys(\Drupal::service('plugin.manager.sdc')->getDefinitions()));"` | [sdc-setup.md](sdc-setup.md) |
 | **Documenter visuellement les composants** | Storybook + `*.stories.js` co-localisé dans le composant | [sdc-storybook.md](sdc-storybook.md) |
 | **Lancer Storybook dans Docker** | Service `node:22-alpine` + `npm run storybook` port 6006 | [sdc-storybook.md](sdc-storybook.md) |
 | Story avec plusieurs variantes (default/featured) | `export const Featured = Template.bind({}); Featured.args = {...}` | [sdc-storybook.md](sdc-storybook.md) |
 | **JS Drupal.behaviors dans un SDC** | `Drupal.behaviors.monComposant = { attach: (context) => { once(...) } }` | [sdc-setup.md](sdc-setup.md) |
 | Props objet imbriqué (image avec alt + url) | `props: { image: { type: object, properties: { url, alt } } }` | [sdc-setup.md](sdc-setup.md) |
-| Slot facultatif avec valeur par défaut Twig | `{% if slots.footer is defined %}...{% else %}...{% endif %}` | [sdc-integration.md](sdc-integration.md) |
+| Slot facultatif avec valeur par défaut Twig | `{% if footer %}{{ footer }}{% else %}...{% endif %}` (slot = variable de 1er niveau) | [sdc-integration.md](sdc-integration.md) |
 | **Migrer un template Twig existant vers SDC** | Créer le répertoire, déplacer le `.twig`, créer `.component.yml` avec les variables comme props | [sdc-setup.md](sdc-setup.md) |
 | **SDC avec variantes (primary / secondary / ghost)** | Prop `variant` de type `string` + `enum: [primary, secondary, ghost]` + class conditionnelle Twig | [sdc-setup.md](sdc-setup.md) |
-| **Passer une render array Drupal comme slot** | `{{ slots.content }}` dans le twig — les render arrays sont gérés automatiquement | [sdc-integration.md](sdc-integration.md) |
+| **Passer une render array Drupal comme slot** | `{{ content }}` dans le twig — les render arrays sont gérés automatiquement | [sdc-integration.md](sdc-integration.md) |
 | **SDC depuis un template preprocess (PHP)** | `$variables['#type'] = 'component'; $variables['#component'] = 'mon_theme:card';` | [sdc-integration.md](sdc-integration.md) |
 | **Partager des SDC entre un module et un thème** | Module : `web/modules/custom/mon_module/components/` → accessible partout | [sdc-integration.md](sdc-integration.md) |
+| **Surcharger un composant de module depuis le thème** | `replaceComponent` dans `mon_theme.info.yml` (ou `hook_component_info_alter`) | [sdc-integration.md](sdc-integration.md) |
+| **Attacher une librairie partagée à un composant** | `libraryOverrides:` ou `libraryDependencies:` dans `*.component.yml` | [sdc-setup.md](sdc-setup.md) |
 | **CSS scopé avec :host (isolation)** | `mon-composant.css` — les sélecteurs sont scopés au shadow root du composant | [sdc-setup.md](sdc-setup.md) |
 | **Storybook + Controls (props configurables)** | `argTypes: { variant: { control: 'select', options: ['primary','secondary'] } }` | [sdc-storybook.md](sdc-storybook.md) |
 | **Tester un SDC (PHPUnit)** | `KernelTestBase` + `ComponentValidator::validate()` ou assert HTML dans Functional | [sdc-setup.md](sdc-setup.md) |
-| **SDC en production — désactiver la validation des props** | `services.yml` → `sdc.debug: false` (activé uniquement en dev) | [sdc-setup.md](sdc-setup.md) |
+| **SDC en production — désactiver la validation des props** | `services.yml` → `sdc.enforce_schemas: false` (activé uniquement en dev) | [sdc-setup.md](sdc-setup.md) |
 
 ## Anatomie d'un Composant SDC
 
@@ -77,11 +79,13 @@ web/themes/custom/mon_theme/components/
 
 ## Évolution par Version Majeure
 
-| Feature | D10.3 | D10.4+ | D11 |
-|---------|-------|--------|-----|
+| Feature | D10.1-10.2 | D10.3 | D11 |
+|---------|-----------|-------|-----|
 | SDC core | ✅ expérimental | ✅ stable | ✅ stable |
-| Props validation | ✅ | ✅ stricte | ✅ stricte |
+| Props validation (`sdc.enforce_schemas`) | ✅ | ✅ stricte | ✅ stricte |
 | SDC dans modules | ✅ | ✅ | ✅ |
+| Override (`replaceComponent` / `hook_component_info_alter`) | ✅ | ✅ | ✅ |
+| `libraryOverrides` + variants schema | partiel | ✅ | ✅ |
 | Storybook integration | contrib | contrib | contrib |
 | Layout Builder + SDC | ✅ | ✅ | ✅ |
 

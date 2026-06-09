@@ -28,17 +28,16 @@ Tous héritent de classes base dans `Drupal\views\Plugin\views\` et utilisent le
 // src/Plugin/views/field/CommandeMontant.php
 namespace Drupal\mon_module\Plugin\views\field;
 
+use Drupal\views\Attribute\ViewsField;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Affiche le montant d'une commande formaté en euros.
- *
- * @ViewsField("mon_module_commande_montant")
  */
-// D11 : remplacer l'annotation par un attribute PHP :
-// #[ViewsField("mon_module_commande_montant")]
+// D11 — attribut PHP (standard core). Annotation @ViewsField = legacy (≤ D12).
+#[ViewsField("mon_module_commande_montant")]
 class CommandeMontant extends FieldPluginBase {
 
   /**
@@ -123,14 +122,45 @@ class CommandeMontant extends FieldPluginBase {
     }
 
     if ($ids) {
-      // Charger toutes les entités en une seule requête
-      $this->commandes = \Drupal::entityTypeManager()
+      // Charger toutes les entités en une seule requête (service injecté).
+      $this->commandes = $this->entityTypeManager
         ->getStorage('mon_module_commande')
         ->loadMultiple($ids);
     }
   }
 }
 ```
+
+> **Injection de dépendances (règle).** N'appelle pas `\Drupal::entityTypeManager()`
+> dans `render()`/`preRender()`. Les handlers Views implémentent `ContainerFactoryPluginInterface` —
+> injecte les services via `create()` :
+>
+> ```php
+> use Drupal\Core\Entity\EntityTypeManagerInterface;
+> use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+> use Symfony\Component\DependencyInjection\ContainerInterface;
+>
+> class CommandeMontant extends FieldPluginBase implements ContainerFactoryPluginInterface {
+>
+>   public function __construct(
+>     array $configuration,
+>     $plugin_id,
+>     $plugin_definition,
+>     protected EntityTypeManagerInterface $entityTypeManager,
+>   ) {
+>     parent::__construct($configuration, $plugin_id, $plugin_definition);
+>   }
+>
+>   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition): static {
+>     return new static(
+>       $configuration,
+>       $plugin_id,
+>       $plugin_definition,
+>       $container->get('entity_type.manager'),
+>     );
+>   }
+> }
+> ```
 
 ---
 
@@ -142,13 +172,13 @@ class CommandeMontant extends FieldPluginBase {
 namespace Drupal\mon_module\Plugin\views\filter;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\views\Attribute\ViewsFilter;
 use Drupal\views\Plugin\views\filter\InOperator;
 
 /**
  * Filtre Views sur le statut des commandes.
- *
- * @ViewsFilter("mon_module_commande_statut")
  */
+#[ViewsFilter("mon_module_commande_statut")]
 class CommandeStatut extends InOperator {
 
   /**
@@ -175,11 +205,10 @@ class CommandeStatut extends InOperator {
 namespace Drupal\mon_module\Plugin\views\filter;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\views\Attribute\ViewsFilter;
 use Drupal\views\Plugin\views\filter\NumericFilter;
 
-/**
- * @ViewsFilter("mon_module_montant_min")
- */
+#[ViewsFilter("mon_module_montant_min")]
 class CommandeMontantMin extends NumericFilter {
 
   /**
@@ -223,13 +252,13 @@ class CommandeMontantMin extends NumericFilter {
 // src/Plugin/views/sort/CommandeScore.php
 namespace Drupal\mon_module\Plugin\views\sort;
 
+use Drupal\views\Attribute\ViewsSort;
 use Drupal\views\Plugin\views\sort\SortPluginBase;
 
 /**
  * Tri des commandes par score de priorité calculé.
- *
- * @ViewsSort("mon_module_commande_score")
  */
+#[ViewsSort("mon_module_commande_score")]
 class CommandeScore extends SortPluginBase {
 
   /**
@@ -261,13 +290,13 @@ class CommandeScore extends SortPluginBase {
 // src/Plugin/views/relationship/CommandeToClient.php
 namespace Drupal\mon_module\Plugin\views\relationship;
 
+use Drupal\views\Attribute\ViewsRelationship;
 use Drupal\views\Plugin\views\relationship\RelationshipPluginBase;
 
 /**
  * Relation Views de Commande vers Client (table personnalisée).
- *
- * @ViewsRelationship("mon_module_commande_to_client")
  */
+#[ViewsRelationship("mon_module_commande_to_client")]
 class CommandeToClient extends RelationshipPluginBase {
 
   /**
@@ -294,14 +323,14 @@ class CommandeToClient extends RelationshipPluginBase {
 // src/Plugin/views/area/CommandeResume.php
 namespace Drupal\mon_module\Plugin\views\area;
 
+use Drupal\views\Attribute\ViewsArea;
 use Drupal\views\Plugin\views\area\AreaPluginBase;
 use Drupal\views\ResultRow;
 
 /**
  * Affiche un résumé des commandes dans le header Views.
- *
- * @ViewsArea("mon_module_commande_resume")
  */
+#[ViewsArea("mon_module_commande_resume")]
 class CommandeResume extends AreaPluginBase {
 
   /**
@@ -342,11 +371,11 @@ class CommandeResume extends AreaPluginBase {
 ## Déclarer les Handlers dans hook_views_data
 
 ```php
-// Dans hook_views_data() — référencer les handlers custom par leur @ViewsField ID
+// Dans hook_views_data() — référencer les handlers custom par leur ID #[ViewsField]
 $data['mon_module_commandes']['montant'] = [
   'title' => t('Montant formaté'),
   'field' => [
-    'id' => 'mon_module_commande_montant',   // ID du #[ViewsField] / @ViewsField
+    'id' => 'mon_module_commande_montant',   // ID déclaré dans #[ViewsField("...")]
   ],
   'filter' => [
     'id' => 'mon_module_montant_min',

@@ -2,6 +2,24 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Passe de fiabilité — correction de défauts factuels et alignement aux standards Docker natif**
+
+### Corrigé
+- **`sitemap.md`** : nom de hook erroné `hook_simple_sitemap_links_alter_all` → `hook_simple_sitemap_links_alter` (signature `$sitemap` corrigée).
+- **`redirects.md`** : section « Intégration Pathauto » référençait par erreur « Webform → Settings » → corrigé en `/admin/config/search/path/settings` avec le libellé exact d'« Update action ».
+- **`pathauto.md`** : libellé d'option Pathauto aligné sur le wording réel de l'UI + mention de la dépendance `drupal/redirect`.
+- **`metatag.md`** : tokens OG/Twitter image corrigés pour les champs **Media** (`…:entity:field_media_image:entity:url`) avec note sur le cas File vs Media (cohérence avec lessons.md).
+- **`structured-data.md`** : ajout des cache metadata obligatoires (`#cache['tags']` node:ID, `#cache['contexts']` url.path) pour éviter le JSON-LD obsolète servi depuis le cache ; garde-fou `isAdminRoute()` sur l'Organization pour ne pas polluer l'admin.
+- **`SKILL.md`** : lien mort `agents/seo-audit.md` supprimé ; renvois Core Web Vitals corrigés (pointaient vers `sitemap.md` au lieu du skill `drupal-performance`).
+
+### Ajouté
+- **`SKILL.md`** : convention d'exécution **Docker natif** (`docker compose exec php drush …`, jamais `ddev`) conforme aux standards projet.
+- **`lessons.md`** : leçon « JSON-LD obsolète servi depuis le cache » + section de corrections de cohérence.
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale — identifié lors de l'audit ultra-critique comme skill manquant**

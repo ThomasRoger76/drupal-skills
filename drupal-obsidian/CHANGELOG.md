@@ -2,6 +2,22 @@
 
 ---
 
+## v1.2 — 2026-06-09
+
+**Bugs corrigés (vérifiés fonctionnellement sur YAML factices) :**
+- `extraction.md` : le fix v1.1 de `_build_fields_table` était **incomplet** — les 3 appels (`extract_content_types`, `extract_paragraphs`, `extract_taxonomies`) passaient `all_fields` au lieu de `all_storages`, donc la colonne « Type » affichait `?` partout. Corrigé → affiche désormais le vrai type (ex. `image`)
+- `extraction.md` + `dataview-queries.md` : les requêtes Dataview lisaient `p.fields?.length` mais aucune note n'émettait de clé `fields:`. Ajout de `fields: <n>` au frontmatter des Content Types, Paragraphs et Taxonomies
+- `extraction.md` / `SKILL.md` : `detect_entity_type` testait `sdc.component.*` — préfixe qui n'existe pas en config/sync. Branche retirée, note explicative ajoutée ; SKILL.md pointe désormais vers la vraie source (thème pour SDC, paquet recipe pour Recipes)
+
+**Extractions ajoutées (étaient promises mais absentes du script) :**
+- `extract_workflows()` — `workflows.workflow.*` : états, transitions et bundles (lecture correcte sous `type_settings`, jamais à la racine)
+- `extract_migrations()` — `migrate_plus.migration.*` : source, destination, dépendances `required`, commandes drush Docker. Notes générées dans `Migrations/`
+- Les deux branchés dans `main()` ; `type: migration` ajouté au frontmatter standard de SKILL.md
+
+**Validation :** script complet (708 lignes) compilé sans erreur + exécuté sur un jeu de YAML factices (storage/instance/CT/workflow/migration) → notes conformes.
+
+---
+
 ## v1.1 — 2026-05-14
 
 **Bugs corrigés :**
@@ -114,4 +130,4 @@
 
 | Skill version | Drupal | Obsidian | Dataview plugin | Python |
 |--------------|--------|----------|----------------|--------|
-| v1.0 | D9, D10, D11 | 1.x | 0.5+ | 3.8+ |
+| v1.0 → v1.2 | D9, D10, D11 | 1.x | 0.5+ | 3.10+ |

@@ -8,8 +8,9 @@ description: Utiliser l'API REST Webform pour soumettre des formulaires depuis u
 ## Activation de l'API REST Webform
 
 ```bash
-# Modules requis
-drush en webform_rest serialization hal basic_auth -y
+# Modules requis (hal est déprécié/retiré en D10+ : ne l'installer que si une
+# intégration legacy l'exige ; rest + serialization suffisent pour du JSON)
+docker compose exec php drush en webform_rest serialization basic_auth -y
 
 # Vérifier que l'endpoint est actif
 curl https://mon-site.com/webform_rest/mon_formulaire/fields?_format=json

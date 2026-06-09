@@ -46,6 +46,27 @@ Problèmes d'emails Drupal découverts en projet réel.
 - **Correct :** `{{ absolute_url(image_url) }}` dans le template Twig email
 - **Prévention :** Règle : toutes les URLs d'images dans les emails doivent être absolues
 
+### 2026-06-08 — `createParams()` casse avec un type concret en argument
+
+- **Symptôme :** `Declaration of ...::createParams() must be compatible with EmailBuilderBase::createParams(EmailInterface $email, ...$params)` au `drush cr`
+- **Cause :** Signature `createParams(EmailInterface $email, ?Commande $commande = NULL)` — incompatible avec la signature variadique du parent
+- **Correct :** Respecter le contrat variadique et narrower dans le corps : `createParams(EmailInterface $email, mixed $commande = NULL)` puis `if ($commande instanceof Commande)`
+- **Prévention :** Ne jamais re-typer un argument variadique hérité. Narrower dans le corps, pas dans la signature.
+
+### 2026-06-08 — Return-Path introuvable sur EmailInterface
+
+- **Symptôme :** `Call to undefined method ...::setReturnPath()` dans un EmailBuilder
+- **Cause :** `EmailInterface` (Symfony Mailer Drupal) n'expose pas le Return-Path / Sender de l'Envelope
+- **Correct :** Agir sur le Mime Email sous-jacent via `$email->getInner()` dans un EmailProcessor (phase POST_RENDER), ou laisser le provider SMTP (SendGrid/Mailgun/SES) réécrire le Return-Path vers son domaine de bounce
+- **Prévention :** Distinguer l'API `EmailInterface` Drupal du composant `Symfony\Component\Mime\Email`. Le Return-Path est une notion d'Envelope, pas de message.
+
+### 2026-06-08 — `importTransportConfig()` n'existe pas
+
+- **Symptôme :** `Call to undefined method` lors de l'import "magique" des policies
+- **Cause :** Méthode inventée — aucun helper d'import automatique des policies par défaut
+- **Correct :** Activer le module (`drush en symfony_mailer -y`) crée les EmailBuilder core et les policies par défaut. Les overrides se font via l'UI `/admin/config/system/mailer/policy` ou la config exportée
+- **Prévention :** Vérifier l'existence d'une méthode de service avant de l'appeler — `grep` dans le code du module contrib.
+
 ### 2026-05-16 — Email envoyé depuis le mauvais expéditeur
 
 - **Symptôme :** FROM = `admin@site.com` au lieu de `noreply@site.com`

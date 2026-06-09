@@ -208,7 +208,7 @@ function images() {
 function watch() {
   // URL de l'environnement local Docker Compose
   browserSync.init({
-    proxy: 'https://mon-projet.docker compose exec php.site',
+    proxy: 'https://mon-projet.localhost',
     https: false,
     open: false,
     notify: false,
@@ -407,30 +407,27 @@ docker compose run --rm webpack_theming npm install
 docker compose run --rm webpack_theming npm update bootstrap
 ```
 
-### Service Node.js additionnel (Docker Compose)
+### Service Node.js additionnel (fichier Compose dédié)
 
 ```yaml
-# .docker compose exec php/docker-compose.node.yml
+# docker-compose.node.yml — overlay Compose pour isoler le service Node
 services:
   node:
     image: node:22-alpine
-    container_name: docker compose exec php-${DDEV_SITENAME}-node
+    container_name: ${COMPOSE_PROJECT_NAME:-drupal}-node
     volumes:
-      - ../web/themes/custom/montheme:/app
+      - ./web/themes/custom/montheme:/app
     working_dir: /app
     command: sh -c "npm install && npm run watch"
     restart: unless-stopped
-    labels:
-      com.docker compose exec php.site-name: ${DDEV_SITENAME}
-      com.docker compose exec php.approot: ${DDEV_APPROOT}
 ```
 
 ```bash
-# Dans le Makefile ou Taskfile pour installer les dépendances
-# .docker compose exec php/config.yaml
-hooks:
-  post-start:
-    - exec-host: "docker compose -f .docker compose exec php/docker-compose.node.yml exec node npm install"
+# Lancer ce service en parallèle de la stack principale
+docker compose -f docker-compose.yml -f docker-compose.node.yml up node -d
+
+# Installer/mettre à jour les dépendances
+docker compose -f docker-compose.node.yml run --rm node npm install
 ```
 
 ---

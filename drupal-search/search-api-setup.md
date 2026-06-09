@@ -158,9 +158,7 @@ processor_settings:
     weights:
       preprocess_index: -10
       preprocess_query: -10
-    settings:
-      role_field: 'aggregated_field'
-      user_field: 'aggregated_field'
+    settings: {}
   html_filter:
     processor_id: html_filter
     weights:
@@ -306,30 +304,41 @@ $index = \Drupal::entityTypeManager()
   ->load('articles_index');
 
 $datasource_id = 'entity:node';
-$item_id = $datasource_id . '/42';     // node ID 42
+// L'identifiant de tracking inclut le langcode : "entity:node/{nid}:{langcode}".
+$tracking_id = $datasource_id . '/42:fr';
 
-$index->trackItemsUpdated($datasource_id, ['42']);
+// trackItemsUpdated attend la liste des IDs de tracking (avec langcode).
+$index->trackItemsUpdated($datasource_id, [$tracking_id]);
 
 // Pour déclencher l'indexation en batch (sans attendre le cron) :
 $index->indexItems(100);  // indexer 100 items
 
 // Hook pour ré-indexer quand une entité référencée change :
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\taxonomy\TermInterface;
+
 function mon_module_entity_update(EntityInterface $entity): void {
-  if ($entity instanceof TermInterface) {
-    // Réindexer tous les nœuds qui référencent ce terme
-    $query = \Drupal::entityQuery('node')
-      ->condition('field_tags', $entity->id())
-      ->accessCheck(FALSE)
-      ->execute();
-
-    if ($query) {
-      $index = \Drupal::entityTypeManager()
-        ->getStorage('search_api_index')
-        ->load('articles_index');
-
-      $items = array_map(fn($nid) => "entity:node/$nid", array_keys($query));
-      $index->trackItemsUpdated('entity:node', array_keys($query));
-    }
+  if (!$entity instanceof TermInterface) {
+    return;
   }
+
+  // Réindexer tous les nœuds qui référencent ce terme.
+  $nids = \Drupal::entityQuery('node')
+    ->condition('field_tags', $entity->id())
+    ->accessCheck(FALSE)
+    ->execute();
+
+  if (!$nids) {
+    return;
+  }
+
+  $index = \Drupal::entityTypeManager()
+    ->getStorage('search_api_index')
+    ->load('articles_index');
+
+  // Marquer les nœuds comme à réindexer. Search API résout les langcodes
+  // de chaque entité ; passer les nids suffit via trackItemsUpdated sur la datasource.
+  $tracking_ids = array_map(static fn (string $nid): string => "$nid:" . $entity->language()->getId(), $nids);
+  $index->trackItemsUpdated('entity:node', $tracking_ids);
 }
 ```

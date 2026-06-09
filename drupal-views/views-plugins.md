@@ -27,20 +27,21 @@ Field Plugins    → Rendu de chaque champ dans une ligne
 namespace Drupal\mon_module\Plugin\views\style;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\views\Attribute\ViewsStyle;
 use Drupal\views\Plugin\views\style\StylePluginBase;
 
 /**
  * Style Views "Carte" — affiche les résultats en grille de cartes.
- *
- * @ViewsStyle(
- *   id = "mon_module_carte",
- *   title = @Translation("Carte (grille)"),
- *   help = @Translation("Affiche les résultats en grille de cartes."),
- *   theme = "views_view_carte",
- *   display_types = {"normal"}
- * )
  */
-// D11 : #[ViewsStyle(...)] attribute
+// D11 — attribut PHP (standard core). Noter `TranslatableMarkup`, PAS `@Translation`.
+#[ViewsStyle(
+  id: "mon_module_carte",
+  title: new TranslatableMarkup("Carte (grille)"),
+  help: new TranslatableMarkup("Affiche les résultats en grille de cartes."),
+  theme: "views_view_carte",
+  display_types: ["normal"],
+)]
 class CarteStyle extends StylePluginBase {
 
   /**
@@ -138,20 +139,21 @@ function mon_module_theme(): array {
 // src/Plugin/views/row/CarteRow.php
 namespace Drupal\mon_module\Plugin\views\row;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\views\Attribute\ViewsRow;
 use Drupal\views\Plugin\views\row\RowPluginBase;
 use Drupal\views\ResultRow;
 
 /**
  * Rendu d'une ligne comme carte.
- *
- * @ViewsRow(
- *   id = "mon_module_carte_row",
- *   title = @Translation("Carte"),
- *   help = @Translation("Affiche chaque résultat comme une carte."),
- *   theme = "views_view_row_carte",
- *   display_types = {"normal"}
- * )
  */
+#[ViewsRow(
+  id: "mon_module_carte_row",
+  title: new TranslatableMarkup("Carte"),
+  help: new TranslatableMarkup("Affiche chaque résultat comme une carte."),
+  theme: "views_view_row_carte",
+  display_types: ["normal"],
+)]
 class CarteRow extends RowPluginBase {
 
   /**
@@ -180,21 +182,22 @@ class CarteRow extends RowPluginBase {
 // src/Plugin/views/display/ICalDisplay.php
 namespace Drupal\mon_module\Plugin\views\display;
 
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\views\Attribute\ViewsDisplay;
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Display Plugin iCalendar — exporte les résultats en format .ics.
- *
- * @ViewsDisplay(
- *   id = "mon_module_ical",
- *   title = @Translation("iCalendar export"),
- *   help = @Translation("Exporte les résultats en format iCal (.ics)."),
- *   uses_menu_links = FALSE,
- *   uses_route = TRUE,
- *   admin = @Translation("iCal export")
- * )
  */
+#[ViewsDisplay(
+  id: "mon_module_ical",
+  title: new TranslatableMarkup("iCalendar export"),
+  help: new TranslatableMarkup("Exporte les résultats en format iCal (.ics)."),
+  uses_menu_links: FALSE,
+  uses_route: TRUE,
+  admin: new TranslatableMarkup("iCal export"),
+)]
 class ICalDisplay extends DisplayPluginBase {
 
   /**
@@ -248,12 +251,9 @@ class ICalDisplay extends DisplayPluginBase {
     );
   }
 
-  /**
-   * Déclarer la route pour ce display.
-   */
-  public function getRoutedDisplay(): bool {
-    return TRUE;
-  }
+  // La route est déclarée par `uses_route: TRUE` dans l'attribut + collectRoutes()
+  // hérité de DisplayPluginBase. Ne pas surcharger getRoutedDisplay() (qui retourne
+  // l'ID du display routé, pas un booléen).
 }
 ```
 

@@ -251,17 +251,118 @@ nom_complet:
 ## CAPTCHA et Anti-Spam
 
 ```bash
+# Honeypot : protection invisible, zéro friction utilisateur — à privilégier
 composer require drupal/captcha drupal/recaptcha drupal/honeypot
-drush en captcha recaptcha honeypot -y
+docker compose exec php drush en captcha recaptcha honeypot -y
 ```
 
 ```yaml
 # Honeypot (invisible — recommandé) — via settings du formulaire
 # Settings → Spam protection → Enable honeypot
 
-# reCAPTCHA v3 (invisible)
+# CAPTCHA reCAPTCHA v2 (le module drupal/recaptcha fournit la v2 :
+# "I'm not a robot" ou "Invisible reCAPTCHA badge")
 captcha:
   '#type': captcha
-  '#captcha_type': 'recaptcha/reCAPTCHA v3'
+  '#captcha_type': 'recaptcha/reCAPTCHA'
   '#captcha_admin_mode': false
 ```
+
+> **reCAPTCHA v3 :** le module `drupal/recaptcha` ne gère que la v2. Pour la v3 (score sans
+> interaction), installer `drupal/recaptcha_v3` qui ajoute un type CAPTCHA dédié, puis configurer le
+> seuil de score dans `/admin/config/people/captcha/recaptcha_v3`.
+
+---
+
+## Élément Custom — `#[WebformElement]`
+
+> **Config avant code.** 50+ éléments natifs + composites custom (créables via UI : Build → composite)
+> couvrent la quasi-totalité des besoins. Ne créer un élément en PHP que pour un widget réellement
+> spécifique (rendu, validation et masse de données qu'aucun composite ne sait produire).
+
+En Drupal 11 / Webform 6.2+, les plugins d'élément utilisent l'attribut PHP `#[WebformElement]`
+(`Drupal\webform\Attribute\WebformElement`) — l'annotation `@WebformElement` est dépréciée. Un élément
+custom étend généralement une base existante (`WebformTextField`, `WebformElementBase`, etc.).
+
+```php
+<?php
+
+declare(strict_types=1);
+
+// src/Plugin/WebformElement/Siret.php
+namespace Drupal\mon_module\Plugin\WebformElement;
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\webform\Attribute\WebformElement;
+use Drupal\webform\Plugin\WebformElement\TextField;
+use Drupal\webform\WebformSubmissionInterface;
+
+/**
+ * Champ SIRET (numéro d'établissement français, 14 chiffres, clé de Luhn).
+ */
+#[WebformElement(
+  id: 'siret',
+  label: new TranslatableMarkup('SIRET'),
+  description: new TranslatableMarkup('Numéro SIRET français validé (14 chiffres + Luhn).'),
+  category: new TranslatableMarkup('Mon Module'),
+)]
+class Siret extends TextField {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defineDefaultProperties(): array {
+    return [
+      '#maxlength' => 14,
+      '#pattern' => '\d{14}',
+    ] + parent::defineDefaultProperties();
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Validation serveur — ne jamais se fier au seul #pattern (bypassable côté client).
+   */
+  public function prepare(array &$element, ?WebformSubmissionInterface $webform_submission = NULL): void {
+    parent::prepare($element, $webform_submission);
+    // Validation Luhn côté serveur, callback ajouté au pipeline de l'élément.
+    $element['#element_validate'][] = [static::class, 'validateSiret'];
+  }
+
+  /**
+   * Valide la clé de Luhn du SIRET.
+   */
+  public static function validateSiret(array &$element, FormStateInterface $form_state): void {
+    $value = $form_state->getValue($element['#parents']);
+    if ($value === '' || $value === NULL) {
+      return;
+    }
+    if (!self::isLuhnValid($value)) {
+      $form_state->setError($element, new TranslatableMarkup('Le numéro SIRET est invalide.'));
+    }
+  }
+
+  /**
+   * Algorithme de Luhn.
+   */
+  protected static function isLuhnValid(string $number): bool {
+    $sum = 0;
+    $alt = FALSE;
+    for ($i = strlen($number) - 1; $i >= 0; $i--) {
+      $digit = (int) $number[$i];
+      if ($alt) {
+        $digit *= 2;
+        if ($digit > 9) {
+          $digit -= 9;
+        }
+      }
+      $sum += $digit;
+      $alt = !$alt;
+    }
+    return $sum % 10 === 0;
+  }
+}
+```
+
+Après ajout : `docker compose exec php drush cr` puis l'élément `siret` apparaît dans Build → Add element.

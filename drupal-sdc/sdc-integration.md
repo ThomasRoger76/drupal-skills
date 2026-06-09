@@ -93,6 +93,38 @@ slots:
 
 ---
 
+## Surcharger un Composant de Module depuis le Thème
+
+Un thème peut remplacer un composant fourni par un module (ou par un autre thème
+parent) sans toucher au code d'origine — pattern natif, config avant code.
+
+```yaml
+# mon_theme.info.yml
+name: Mon Theme
+type: theme
+base theme: olivero
+
+# Remplace le composant 'mon_module:alert' par 'mon_theme:alert'
+# (le composant mon_theme/components/alert doit exister et respecter le même schema)
+components:
+  replacements:
+    'mon_module:alert': 'mon_theme:alert'
+```
+
+Pour une logique conditionnelle (par langue, par contexte…), passer par le hook :
+
+```php
+// mon_module.module — altérer les définitions de composants découvertes
+function mon_module_component_info_alter(array &$definitions): void {
+  if (isset($definitions['mon_module:alert'])) {
+    // Ex : forcer une variante par défaut, ajouter une librairie, etc.
+    $definitions['mon_module:alert']['group'] = 'Composants surchargés';
+  }
+}
+```
+
+---
+
 ## SDC dans un Render Array (PHP)
 
 ```php
@@ -198,17 +230,17 @@ function mon_theme_preprocess_node__article(&$variables): void {
 ## Commandes de Debug
 
 ```bash
-# Lister les composants disponibles avec leur ID
+# Lister les composants disponibles avec leur ID + chemin
 drush php:eval "
-\$r = \Drupal::service('sdc.component_registry');
-foreach (\$r->getAllComponents() as \$id => \$c) {
-  echo \$id . ' (' . \$c->getPath() . ')' . PHP_EOL;
+\$manager = \Drupal::service('plugin.manager.sdc');
+foreach (\$manager->getDefinitions() as \$id => \$def) {
+  echo \$id . ' (' . (\$def['path'] ?? '?') . ')' . PHP_EOL;
 }
 "
 
-# Vider le cache SDC
+# Vider le cache SDC (obligatoire après création/renommage d'un composant)
 drush cr
 
 # Activer les erreurs de validation SDC
-# services.yml → parameters.sdc.debug: true
+# services.yml → parameters.sdc.enforce_schemas: true
 ```

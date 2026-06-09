@@ -126,9 +126,11 @@ $replaced = $token_service->replace('[site:name] — [date:custom:Y]');
 // Nettoyer les tokens non résolus (éviter [node:field_optionnel] dans le texte)
 $replaced = $token_service->replace($text, ['node' => $node], ['clear' => TRUE]);
 
-// Valider les tokens dans un texte (vérifier qu'ils sont syntaxiquement corrects)
-$errors = $token_service->validate('[node:CHAMP_INEXISTANT]', ['node']);
-// → ['Invalid token: [node:CHAMP_INEXISTANT]']
+// Lister les tokens invalides d'un texte pour un contexte donné
+// (méthode réelle du service : getInvalidTokensByContext, pas "validate")
+$invalid = $token_service->getInvalidTokensByContext('[node:CHAMP_INEXISTANT]', ['node']);
+// → ['[node:CHAMP_INEXISTANT]']
+// Utile pour valider une saisie utilisateur dans un formulaire de config.
 
 // Obtenir la liste des tokens disponibles pour un type
 $info = $token_service->getInfo();

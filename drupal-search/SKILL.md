@@ -59,7 +59,7 @@ Référentiel complet de Search API Drupal 8-11+ : configuration des indexes, ba
 | Highlighting des termes recherchés | Solr → Excerpt processor (HTML avec balises <em>) | [solr-integration.md](solr-integration.md) |
 | Recherche phonétique (soundex, metaphone) | Solr — phonetic field type dans schema | [solr-integration.md](solr-integration.md) |
 | Search API sans Views (API PHP) | `Index::query()` + `QueryInterface` | [custom-processors.md](custom-processors.md) |
-| **OpenSearch / AWS OpenSearch backend** | `drupal/elasticsearch_connector` ≥ 1.x — supporte Elasticsearch ET OpenSearch via la même API | [elasticsearch.md](elasticsearch.md) |
+| **OpenSearch / AWS OpenSearch backend** | `drupal/elasticsearch_connector` 8.x (ES + OpenSearch) OU `drupal/search_api_opensearch` (AWS) — jamais les deux | [elasticsearch.md](elasticsearch.md) |
 | **Tolérance aux fautes de frappe (fuzzy search)** | Solr — `lowercaseFilter` + `phonetic` OU `edgeNGram` tokenizer | [solr-integration.md](solr-integration.md) |
 | **Tracking des requêtes de recherche** | `drupal/search_api_stats` — logs et rapports des termes recherchés | [search-api-setup.md](search-api-setup.md) |
 | **Recherche "did you mean" (suggestions)** | Solr SpellCheck component — configurer dans `solrconfig.xml` + Search API Solr settings → "Spellcheck" | [solr-integration.md](solr-integration.md) |
@@ -67,6 +67,7 @@ Référentiel complet de Search API Drupal 8-11+ : configuration des indexes, ba
 | **Réindexer automatiquement après mise à jour** | `drupal/search_api_solr` → Index automatique via Queue Worker à la sauvegarde d'entité | [search-api-setup.md](search-api-setup.md) |
 | **Filtrer les résultats par permissions Drupal** | Search API Processor `Content Access` — obligatoire sur tout site avec accès restreint | [search-api-setup.md](search-api-setup.md) |
 | **Search API avec filtres géographiques (geosearch)** | `drupal/geofield` + Search API champ `geofield` + Solr RPT handler | [custom-processors.md](custom-processors.md) |
+| **Processor custom : annotation ou attribut PHP ?** | `@SearchApiProcessor` (annotation Doctrine) — PAS d'attribut `#[]`, le module n'a pas migré | [custom-processors.md](custom-processors.md) |
 
 ## Anti-Patterns Critiques
 
@@ -104,6 +105,7 @@ Référentiel complet de Search API Drupal 8-11+ : configuration des indexes, ba
 
 ## See Also
 
+- `solr` — Administration Solr autonome (cores, schema, solrconfig, tuning JVM) au-delà de l'intégration Drupal
 - `drupal-views` — Views + Search API, exposed filters search, facets dans Views
 - `drupal-docker` — Service Solr Docker, Elasticsearch Docker
 - `drupal-performance` — Cache des résultats de recherche, Varnish + Search

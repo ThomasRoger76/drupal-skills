@@ -20,7 +20,7 @@ description: Déployer Drupal sur Platform.sh - .platform.app.yaml, routes.yaml,
 ## `.platform.app.yaml` — Configuration Principale
 
 ```yaml
-# .platform.app.yaml
+# .platform.app.yaml — D11 supporte php:8.3 et php:8.4 (PHP 8.3+ requis par D11)
 name: app
 type: php:8.3
 
@@ -154,7 +154,7 @@ platform tunnel:open -p PROJECT_ID -e main
 
 # Copier DB prod → local
 platform db:dump -p PROJECT_ID -e main --gzip -f prod-dump.sql.gz
-gunzip prod-dump.sql.gz | drush sql:cli  # Importer en local
+gunzip -c prod-dump.sql.gz | drush sql:cli  # Importer en local (-c = stdout)
 
 # Lancer le déploiement (force redeploy)
 platform environment:redeploy -p PROJECT_ID -e main

@@ -172,8 +172,9 @@ drush redirect-import /path/to/redirects.csv --format=csv
 Quand un alias Pathauto change, le module Redirect crée automatiquement une redirection 301 de l'ancien vers le nouvel alias :
 
 ```
-Configuration : /admin/config/search/path/settings
-→ "When an alias is changed, redirect the old alias to the new one" : ✅
+Configuration : /admin/config/search/path/settings → "Update action"
+→ ✅ "Create a new alias. Delete the old alias and create a redirect."
+   (le module drupal/redirect doit être activé pour que cette option apparaisse)
 ```
 
 **Exemple :**

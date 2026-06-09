@@ -223,20 +223,27 @@ $view->execute();
 ## AJAX Custom — Remplacer le Comportement AJAX Views
 
 ```javascript
-// Surcharger l'AJAX Views pour ajouter un loading indicator
+// Loading indicator sur les Views AJAX — vanilla JS (D10/D11, pas de jQuery requis).
+// L'event `RefreshView` est dispatché par core/drupal.ajax sur l'élément .views-element-container.
 (function (Drupal, once) {
   'use strict';
 
-  // Intercepter le début d'une requête AJAX Views
-  $(document).on('ajaxStart', function () {
-    once('views-ajax-loading', '.view').forEach(function (el) {
-      el.classList.add('view--loading');
-    });
-  });
+  Drupal.behaviors.viewsAjaxLoading = {
+    attach(context) {
+      // Marquer la vue en chargement au clic pager / submit du formulaire exposé.
+      once('views-ajax-loading', '.view', context).forEach((view) => {
+        view.addEventListener('click', (e) => {
+          if (e.target.closest('.pager a, .views-exposed-form [type="submit"]')) {
+            view.classList.add('view--loading');
+          }
+        });
+      });
+    },
+  };
 
-  // Intercepter la fin d'une requête AJAX Views
-  $(document).on('views_ajax_success', function (event, view) {
-    document.querySelectorAll('.view--loading').forEach(function (el) {
+  // Fin de rafraîchissement AJAX Views : core dispatch un CustomEvent 'RefreshView'.
+  document.addEventListener('RefreshView', () => {
+    document.querySelectorAll('.view--loading').forEach((el) => {
       el.classList.remove('view--loading');
     });
   });

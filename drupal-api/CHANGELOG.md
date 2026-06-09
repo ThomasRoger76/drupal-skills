@@ -2,6 +2,22 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Conformité D11 + conventions environnement (objectif 9.5/10)**
+
+### Corrections
+- **Docker natif** : toutes les commandes `composer`/`drush`/génération de clés préfixées `docker compose exec php` (`authentication.md`, `nextjs-drupal.md`, `graphql.md`). Convention rappelée en tête de `SKILL.md`.
+- **Plugins en attributs PHP (D11)** : `RestResource` et `QueueWorker` convertis d'annotations `@...` dépréciées vers attributs `#[RestResource]` / `#[QueueWorker]` avec imports corrects (`cors-webhooks.md`). Ligne d'évolution ajoutée à `SKILL.md`.
+- **Bug `\DateTime::ISO8601`** (non conforme RFC 3339, déprécié) → `\DateTimeInterface::ATOM` + `\DateTimeImmutable` (`cors-webhooks.md`).
+- **CORS par environnement** : nouveau pattern `getenv('CORS_ALLOWED_ORIGINS')` / `settings.local.php` / config_split pour éviter `localhost` et `*` en prod (`authentication.md`, rappel dans `cors-webhooks.md`).
+- **REST core** : rappel `?_format=json` obligatoire + `drupal/restui` pour l'UI, génération de clés via `drush simple-oauth:generate-keys` (`cors-webhooks.md`, `authentication.md`).
+
+### lessons.md
+- +3 incidents : origin localhost en prod, annotation RestResource dépréciée, `DateTime::ISO8601`.
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale**
@@ -48,3 +64,4 @@
 | Skill version | Drupal | Notes |
 |--------------|--------|-------|
 | v1.0 | D8, D9, D10, D11 | JSON:API core D8.7+, Simple OAuth contrib, drupal/next contrib D9+ |
+| v1.1 | D8, D9, D10, D11 | Plugins en attributs PHP recommandés sur D10.2+/D11 (annotations dépréciées) |

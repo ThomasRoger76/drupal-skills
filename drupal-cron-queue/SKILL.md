@@ -39,6 +39,8 @@ Traitement massif, avec progression (migration, rebuild index)
 | Lister les queues et leur taille | `drush queue:list` | [queue-workers.md](queue-workers.md) |
 | Retry automatique si `processItem()` échoue | Lancer une exception → Drupal remet en queue | [queue-workers.md](queue-workers.md) |
 | Suspendre une queue (resource overload) | `SuspendQueueException` | [queue-workers.md](queue-workers.md) |
+| Retry différé avec backoff (API 5xx) | `DelayedRequeueException(300, ...)` | [queue-workers.md](queue-workers.md) |
+| Éviter le chevauchement d'un cron long | `\Drupal::lock()->acquire()` + `release()` | [cron-management.md](cron-management.md) |
 | Traiter des milliers d'items sans timeout | Batch API — `batch_set()` | [batch-api.md](batch-api.md) |
 | Batch avec barre de progression dans l'UI | `batch_set()` depuis un Controller | [batch-api.md](batch-api.md) |
 | Batch depuis Drush (CLI) | `drush_backend_batch_process()` | [batch-api.md](batch-api.md) |
@@ -51,7 +53,7 @@ Traitement massif, avec progression (migration, rebuild index)
 | **Monitorer la taille des queues en production** | `drush queue:list` dans un script cron + alerte si items > seuil | [queue-workers.md](queue-workers.md) |
 | **Queue avec backend Redis (haute performance)** | `settings.php` → `$settings['queue_service_QUEUE_NAME'] = 'queue.reliable_queue'` + `drupal/redis` pour le cache associé | [queue-workers.md](queue-workers.md) |
 | **Priorité entre plusieurs queues** | Exécuter d'abord la queue critique : `drush queue:run critique && drush queue:run secondaire` | [queue-workers.md](queue-workers.md) |
-| **Cron par module avec timing précis** | Ultimate Cron → créer un job `hook_cron()` avec `rules.crontab: '*/5 * * * *'` | [cron-management.md](cron-management.md) |
+| **Cron par module avec timing précis (D11 : préférer crontab natif)** | Plusieurs lignes crontab → `drush queue:run`/commande dédiée ; Ultimate Cron `scheduler.crontab: '*/5 * * * *'` si déjà en place | [cron-management.md](cron-management.md) |
 | **Rejouer les items en erreur** | `RequeueException` → remet l'item en queue avec backoff exponentiel | [queue-workers.md](queue-workers.md) |
 | **Queue items avec expiration (TTL)** | Stocker `created` dans le payload + vérifier `time() - $item->created < 3600` dans `processItem()` | [queue-workers.md](queue-workers.md) |
 | **Batch dans un QueueWorker (chunk de 100)** | `processItem()` qui crée un sous-batch de 100 items max | [batch-api.md](batch-api.md) |
@@ -68,6 +70,7 @@ Traitement massif, avec progression (migration, rebuild index)
 | Cron toutes les minutes sur un VPS partagé | Ultimate Cron avec timing adapté par opération | Surcharge serveur |
 | `drush queue:run` en production sans nohup | `nohup drush queue:run & ou cron wrapper` | Process tué si SSH déconnecté |
 | `$context['finished'] = TRUE` trop tôt | Calculer `$finished = $processed / $total` | Batch se termine avant la fin |
+| `hook_cron()` long sans verrou (run > intervalle) | `\Drupal::lock()->acquire()` en garde | Runs concurrents, état corrompu, doublons |
 
 ## Évolution par Version Majeure
 
@@ -76,12 +79,14 @@ Traitement massif, avec progression (migration, rebuild index)
 | `hook_cron()` | ✅ | ✅ | ✅ | ✅ |
 | Queue API (core) | ✅ | ✅ | ✅ | ✅ |
 | `@QueueWorker` annotation | ✅ | ✅ | ✅ | ⚠️ déprécié |
-| `#[QueueWorker]` attribute | ❌ | ❌ | ✅ opt. | ✅ standard |
+| `#[QueueWorker]` attribute | ❌ | ❌ | ✅ D10.2+ | ✅ standard |
 | Batch API | ✅ | ✅ | ✅ | ✅ |
 | `drush queue:run` | ✅ | ✅ | ✅ | ✅ |
 | `drush queue:list` | ✅ | ✅ | ✅ | ✅ |
-| Ultimate Cron (contrib) | ✅ | ✅ | ✅ | ✅ |
 | `SuspendQueueException` | ✅ | ✅ | ✅ | ✅ |
+| `RequeueException` | ✅ | ✅ | ✅ | ✅ |
+| `DelayedRequeueException` | ❌ | ✅ 9.3+ | ✅ | ✅ |
+| Ultimate Cron (contrib) | ✅ | ✅ | ✅ | ⚠️ beta only |
 
 ## Auto-Amélioration
 

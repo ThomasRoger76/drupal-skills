@@ -8,11 +8,18 @@ description: Installer et configurer le thème Gin comme admin theme Drupal - in
 ## Installation
 
 ```bash
+# gin_toolbar et gin_login sont des projets contrib SÉPARÉS (pas des sous-modules de gin)
 composer require drupal/gin drupal/gin_toolbar drupal/gin_login
-drush en gin gin_toolbar gin_login -y
+drush theme:enable gin -y
+drush en gin_toolbar gin_login -y
 
-# Définir Gin comme thème admin
+# Définir Gin comme thème admin (clé 'admin', PAS 'default')
 drush config:set system.theme admin gin -y
+drush cr
+
+# Pour la sidebar moderne (D10.3+), activer le module Navigation core et basculer Gin :
+drush en navigation -y
+drush config:set gin.settings settings.classic_toolbar new -y
 drush cr
 ```
 
@@ -24,7 +31,7 @@ drush cr
 /admin/appearance/settings/gin
 
 Sections principales :
-├── Gin Toolbar         → Position : horizontal (classique) | sidebar | condensed
+├── Gin Toolbar         → Navigation : horizontal | vertical | new (module Navigation core)
 ├── Appearance
 │     ├── Dark mode     → Off / On / Automatique (suit prefers-color-scheme)
 │     └── Accent color  → Presets (Blue, Green, Orange...) ou custom hex
@@ -60,18 +67,15 @@ status: true
 id: gin
 theme: gin
 settings:
-  enable_darkmode: '0'          # 0=Off, 1=On, 2=Auto
-  classic_toolbar: horizontal   # horizontal|sidebar|condensed
-  accent_color: claro_blue      # Preset ou custom_color
-  preset_accent_color: gin_accent_blue
-  custom_accent_color: '#0678BE'
+  enable_darkmode: '0'          # 0=Off, 1=On, 2=Auto (suit prefers-color-scheme)
+  classic_toolbar: horizontal   # horizontal | vertical | new
+  preset_accent_color: blue     # blue, teal, green, purple, pink, orange, red... ou 'custom'
+  accent_color: '#0678BE'       # utilisé seulement si preset_accent_color = custom
+  preset_focus_color: gin       # gin | green | claro | high_contrast | custom
   high_contrast_mode: false
   show_description_toggle: false
-  sticky_action_buttons: false
-  secondary_toolbar_enabled: false
-  content_form_width: full     # full|md|sm
-  sidebar_expand_all: false
-  show_user_theme_settings: true  # L'utilisateur peut personaliser
+  sticky_action_buttons: '1'
+  show_user_theme_settings: true  # L'utilisateur peut personnaliser dark mode / accent
 ```
 
 ---
@@ -92,12 +96,10 @@ Configuration :
   └── Lien vers le site frontend
 ```
 
-```yaml
-# gin_login.settings.yml
-background_image: ''
-logo_path: 'themes/custom/mon_sous_theme_gin/logo.svg'
-description: 'Espace d''administration — Mon Projet'
-```
+# Toute la config gin_login se fait via l'UI ci-dessus puis `drush cex`.
+# Les noms de clés YAML varient selon la version : ne pas les écrire à la main,
+# laisser Drupal les générer. Inspecter le résultat avec :
+#   drush config:get gin_login.settings
 
 ---
 
@@ -108,10 +110,10 @@ drush en gin_toolbar -y
 ```
 
 ```
-Options de toolbar dans les settings Gin :
-  ├── Horizontal  (barre en haut — comme Seven/Claro)
-  ├── Sidebar     (menu latéral gauche — style backend moderne)
-  └── Condensed   (sidebar avec icônes seulement)
+Valeurs classic_toolbar dans les settings Gin :
+  ├── horizontal  (barre en haut — comme Claro)
+  ├── vertical    (toolbar latérale gauche fournie par gin_toolbar)
+  └── new         (délègue au module core "navigation" — sidebar moderne D10.3+)
 ```
 
 ---
@@ -134,7 +136,8 @@ Permissions :
 
 | Module | Usage |
 |--------|-------|
-| `drupal/gin_toolbar` | Navigation sidebar améliorée |
+| `drupal/gin_toolbar` | Toolbar Gin (requis, projet contrib séparé) |
+| `navigation` (core) | Sidebar moderne D10.3+ (`classic_toolbar: new`) |
 | `drupal/gin_login` | Page de connexion branded |
 | `drupal/field_group` | Grouper les champs en onglets dans les formulaires |
 | `drupal/layout_paragraphs` | Interface Paragraphs compatible Gin |

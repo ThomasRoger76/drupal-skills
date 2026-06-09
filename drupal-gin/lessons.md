@@ -46,6 +46,20 @@ Problèmes avec le thème Gin découverts en projet Drupal.
 - **Correct :** Surcharger `--gin-toolbar-bg-color`, `--gin-toolbar-text-color` dans le sous-thème
 - **Prévention :** Inspecter DevTools sur la toolbar pour identifier les variables CSS spécifiques à surcharger
 
+### 2026-06-08 — Confusion gin_toolbar / module Navigation core / gin_login
+
+- **Symptôme :** Sidebar moderne D10.3+ attendue mais absente ; on cherchait l'option dans gin_login
+- **Cause :** Trois systèmes distincts confondus — `gin_toolbar` (toolbar Gin contrib), module **core `navigation`** (sidebar moderne, 10.3 exp. / 11 stable), `gin_login` (page de login uniquement)
+- **Correct :** `drush en navigation -y` puis `gin.settings → classic_toolbar: new` ; valeurs réelles : `horizontal | vertical | new` (pas `sidebar`/`condensed`)
+- **Prévention :** `gin_login` n'a AUCUN rapport avec la navigation. Vérifier la valeur via `drush config:get gin.settings settings.classic_toolbar`
+
+### 2026-06-08 — Clés gin.settings inventées (preset, content_form_width…)
+
+- **Symptôme :** `drush cim` rejette gin.settings.yml ou la config est ignorée
+- **Cause :** Clés écrites à la main et inexistantes (`preset`, `accent_color` mal utilisé, `system.theme login`)
+- **Correct :** Configurer via UI puis `drush cex` ; dark mode = `enable_darkmode` (0/1/2), accent = `preset_accent_color` (+ `accent_color` si `custom`)
+- **Prévention :** Ne jamais rédiger les YAML Gin/gin_login à la main — laisser Drupal les générer et inspecter avec `drush config:get`
+
 ### 2026-05-16 — gin.settings non versionné — mise en page différente entre devs
 
 - **Symptôme :** Toolbar horizontale chez un dev, sidebar chez un autre

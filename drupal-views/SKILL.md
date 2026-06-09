@@ -13,6 +13,8 @@ Référentiel complet de Drupal Views 8-11+ : configuration UI, plugin system (h
 
 > **Views d'abord — code ensuite.** Si Views peut le faire via l'UI ou un handler, n'écris pas de requête SQL custom. Views gère automatiquement la langue, les permissions d'accès, le cache, la pagination, et les formats d'export.
 
+> **Drush via Docker natif.** Toutes les commandes `drush` de ce skill s'exécutent en Docker natif : `docker compose exec php drush cr|cex|cim|php:eval ...` (jamais `ddev`). Les exemples écrivent `drush ...` nu par concision — préfixe par `docker compose exec php`.
+
 ---
 
 ## Quick Decision Table
@@ -74,14 +76,16 @@ Référentiel complet de Drupal Views 8-11+ : configuration UI, plugin system (h
 | Exposed filter sans AJAX sur liste longue | Activer AJAX sur le formulaire exposé | Rechargement complet de page |
 | `$view->result` manipulé après `execute()` | Utiliser `hook_views_post_execute()` | Résultats incorrects ou non rendus |
 | Contextual filter sans validation | Configurer "Provide default value" | 404 ou erreur si argument absent |
+| `\Drupal::service()` dans un handler/plugin Views | Injecter via `create()` (`ContainerFactoryPluginInterface`) | Non testable, couplage au container global |
+| Annotation `@ViewsField` sur du nouveau code | Attribut `#[ViewsField]` + `TranslatableMarkup` | Découverte par annotation retirée en D12 |
 
 ## Évolution par Version Majeure
 
 | Feature | D8 | D9 | D10 | D11 |
 |---------|----|----|-----|-----|
 | Views intégré au core | ✅ | ✅ | ✅ | ✅ |
-| Plugin annotations `@ViewsField` | ✅ | ✅ | ✅ | ⚠️ déprécié |
-| PHP Attributes `#[ViewsField]` | ❌ | ❌ | ✅ optionnel | ✅ **standard** |
+| Plugin annotations `@ViewsField` | ✅ | ✅ | ✅ | ⚠️ legacy (discovery retiré D12) |
+| PHP Attributes `#[ViewsField]` | ❌ | ❌ | ✅ (D10.2+) | ✅ **standard core** |
 | jQuery dans Views AJAX | ✅ | ✅ | ❌ → vanilla JS | ❌ |
 | `hook_views_data()` dans `.module` | ✅ | ✅ | ✅ | ✅ |
 | REST Export (core) | ✅ | ✅ | ✅ | ✅ |
@@ -89,6 +93,9 @@ Référentiel complet de Drupal Views 8-11+ : configuration UI, plugin system (h
 | Search API backend | contrib | contrib | contrib | contrib |
 | Views language join (D8.4+) | ✅ | ✅ | ✅ | ✅ |
 | Tag-based caching Views | ✅ | ✅ | ✅ | ✅ |
+| Plugins Views core migrés en attributs | ❌ | ❌ | partiel | ✅ 100% |
+
+> **D11 — attributs PHP first.** Core 11 a migré tous ses plugins Views vers les attributs `#[ViewsField]`, `#[ViewsStyle]`, etc. Pour du nouveau code, écris l'attribut directement (avec `Drupal\Core\StringTranslation\TranslatableMarkup` pour les titres, **jamais** `@Translation`). Les annotations `@ViewsField` restent lues par le discovery en D11 mais sont du legacy — leur support de découverte sera retiré en D12.
 
 ## Auto-Amélioration
 

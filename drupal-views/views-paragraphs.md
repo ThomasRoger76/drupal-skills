@@ -89,12 +89,11 @@ function mon_module_views_data_alter(array &$data): void {
 // src/Plugin/views/field/ParagraphRender.php
 namespace Drupal\mon_module\Plugin\views\field;
 
+use Drupal\views\Attribute\ViewsField;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 
-/**
- * @ViewsField("mon_module_paragraph_render")
- */
+#[ViewsField("mon_module_paragraph_render")]
 class ParagraphRender extends FieldPluginBase {
 
   public function query(): void {

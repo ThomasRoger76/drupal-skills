@@ -2,6 +2,24 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Audit qualité — corrections factuelles et currency**
+
+### Corrigé
+- **`patches.md`** — section `composer-patches` v2 réécrite : la v2 est stable (`^2.0`, plus de `@beta`) ; le format étendu correct est une **liste d'objets** sous `extra.patches` avec champ `url` (l'ancien texte utilisait à tort `extra.composer-patches` + `source` + structure objet). Ajout des pièges de migration v1→v2 et du `patches.lock.json`.
+- **`patches.md`** — commande de listing des patches corrigée (`composer config extra.patches` / `jq` au lieu d'un `composer show -d .` qui ne sort pas le JSON).
+- **`version-constraints.md`** — commentaire de `composer update --lock` clarifié (resync du content-hash, ne met pas à jour les versions).
+
+### Ajouté
+- **`SKILL.md`** — note Docker natif (`docker compose exec php composer …`, jamais DDEV) dans la règle fondamentale.
+- **`SKILL.md`** — entrées Quick Decision Table : `composer bump`, patches v2.
+- **`version-constraints.md`** — section `composer bump` (Composer 2.4+).
+- **`composer-basics.md`** — note de currency D11 (passage `^10` → `^11`, Drush `^13`, PHP 8.3+).
+- **`lessons.md`** — 2 leçons (format v2, `update --lock` vs `bump`).
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale — skill critique manquant identifié lors de l'audit**
@@ -65,3 +83,4 @@
 | Skill version | Composer | Drupal | Notes |
 |--------------|---------|--------|-------|
 | v1.0 | 2.x | D8, D9, D10, D11 | Composer 2 requis D9+, allow-plugins D2.2+ |
+| v1.1 | 2.4+ | D8, D9, D10, D11 | composer-patches v2 stable, `composer bump`, Docker natif |

@@ -136,7 +136,7 @@ acli api:environments:database-copy SOURCE_ENV_ID DEST_ENV_ID DATABASE_NAME
 version: 1.0.0
 services:
   mysql:
-    version: '5.7'
+    version: '8.0'   # D11 exige MySQL 8.0+ / MariaDB 10.6+ — 5.7 non supporté
 
 events:
   push:
@@ -176,7 +176,7 @@ steps:
 
 local:
   root: '/var/www/html/web'
-  uri: 'http://mon-projet.ddev.site'
+  uri: 'http://mon-projet.localhost'   # Docker natif (docker compose), jamais DDEV
 
 # Pantheon
 prod.pantheon:

@@ -286,7 +286,7 @@ slots:
 ```
 
 ```twig
-{# web/themes/custom/mon_theme/components/card/card.html.twig #}
+{# web/themes/custom/mon_theme/components/card/card.twig — SDC : {id}.twig, jamais .html.twig #}
 <article class="card card--{{ modifier|default('default') }}">
   {% if image_url %}
     <div class="card__image">
@@ -394,7 +394,7 @@ mon_theme/
 │   └── preview.js       ← Imports CSS globaux, backgrounds, decorators
 ├── components/
 │   └── card/
-│       ├── card.html.twig          ← Template SDC
+│       ├── card.twig               ← Template SDC ({id}.twig, jamais .html.twig)
 │       ├── card.component.yml      ← Schéma SDC
 │       ├── card.css                ← Styles du composant
 │       └── card.stories.js         ← Stories Storybook

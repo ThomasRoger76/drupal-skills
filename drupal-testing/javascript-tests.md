@@ -15,12 +15,21 @@
 ## Prérequis — ChromeDriver avec Docker Compose
 
 ```bash
-# Installer Selenium Standalone Chrome
-# module non nécessaire avec Docker Compose
-docker compose restart php
+# Démarrer le service Selenium/Chrome déclaré dans docker-compose.yml
+docker compose up -d selenium
 
 # Vérifier que le service tourne
 docker compose ps | grep selenium
+```
+
+```yaml
+# docker-compose.yml — service Selenium Standalone Chrome
+services:
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: '2gb'
+    ports:
+      - "4444:4444"
 ```
 
 ```xml
@@ -249,7 +258,7 @@ protected function onNotSuccessfulTest(\Throwable $t): void {
 
 | Erreur | Cause | Solution |
 |--------|-------|---------|
-| `Connection refused to ChromeDriver` | Selenium non démarré | `docker compose exec php restart` après installation de selenium |
+| `Connection refused to ChromeDriver` | Selenium non démarré | `docker compose up -d selenium` puis vérifier `docker compose ps` |
 | Test flaky (passe/échoue aléatoirement) | `sleep()` ou timing non contrôlé | Remplacer par `waitForElement()` |
 | `Element not found` immédiatement | Pas d'attente après action AJAX | `assertWaitOnAjaxRequest()` après chaque action |
 | Screenshot vide | URL de base incorrecte | Vérifier `SIMPLETEST_BASE_URL` dans phpunit.xml |

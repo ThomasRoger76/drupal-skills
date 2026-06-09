@@ -82,8 +82,8 @@ required: false
 ## Display Modes — View Modes
 
 ```bash
-# Lister les view modes disponibles
-drush php:eval "
+# Lister les view modes disponibles (Docker natif — jamais ddev)
+docker compose exec php drush php:eval "
 \$modes = \Drupal::entityTypeManager()->getStorage('entity_view_mode')->loadMultiple();
 foreach (\$modes as \$id => \$mode) {
   if (str_starts_with(\$id, 'node.')) {
@@ -184,8 +184,8 @@ $revision_ids = \Drupal::entityTypeManager()
 ## Workflow Editorial (Content Moderation)
 
 ```bash
-# Activer Content Moderation
-drush en content_moderation workflows -y
+# Activer Content Moderation (Docker natif — jamais ddev)
+docker compose exec php drush en content_moderation workflows -y
 
 # Créer un workflow (via UI ou config YAML)
 # /admin/config/workflow/workflows/add
@@ -254,7 +254,7 @@ $state = $node->get('moderation_state')->value;
 
 ```bash
 composer require drupal/pathauto
-drush en pathauto -y
+docker compose exec php drush en pathauto -y
 ```
 
 ```yaml

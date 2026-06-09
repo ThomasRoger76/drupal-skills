@@ -5,6 +5,11 @@ description: Structure du composer.json Drupal, commandes essentielles, scaffold
 
 # Composer Drupal — Fondamentaux
 
+> **Currency D11 :** le template ci-dessous est en `^10` (encore le plus déployé).
+> Pour un nouveau projet Drupal 11, remplacer chaque `^10` par `^11`, `drush/drush`
+> par `^13`, et viser PHP 8.3+ (`config.platform.php`). Voir la procédure exacte
+> D10→D11 dans [version-constraints.md](version-constraints.md).
+
 ## Structure `composer.json` Drupal Standard
 
 ```json

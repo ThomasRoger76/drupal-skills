@@ -43,8 +43,8 @@ HTML Knowledge Graph interactif + Rapport d'audit
 | Extraire les Views → notes | Script Python → `type: view` | [extraction.md](extraction.md) |
 | Extraire les Workflows (Content Moderation) → notes | Script Python → `type: workflow` | [extraction.md](extraction.md) |
 | Extraire les Migrations → notes | Script Python → `type: migration` | [extraction.md](extraction.md) |
-| Extraire les SDC Components → notes | Script Python → `type: sdc_component` | [extraction.md](extraction.md) |
-| Extraire les Drupal Recipes → notes | Script Python → `type: recipe` | [extraction.md](extraction.md) |
+| Extraire les SDC Components → notes (scan du **thème**, pas de config/sync) | `*.component.yml` dans `themes/.../components/` | [extraction.md](extraction.md) |
+| Extraire les Drupal Recipes → notes (scan du **paquet recipe**) | `recipe.yml` à la racine du recipe | [extraction.md](extraction.md) |
 | Extraire les Menus et liens de menu | Script Python → `type: menu` | [extraction.md](extraction.md) |
 | Extraire les Rôles et permissions | Script Python → `type: role` | [extraction.md](extraction.md) |
 | Extraire les Media Types | Script Python → `type: media_type` | [extraction.md](extraction.md) |
@@ -134,7 +134,8 @@ type: twig_template  → Templates .html.twig
 type: view           → Views (views.view.*)
 type: hook           → Hooks PHP
 type: service        → Services Drupal
-type: workflow       → Workflows éditoriaux
+type: workflow       → Workflows éditoriaux (workflows.workflow.*)
+type: migration      → Migrations (migrate_plus.migration.*)
 ```
 
 ## Anti-Patterns

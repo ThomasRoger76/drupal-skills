@@ -35,25 +35,26 @@ $images = Media::loadMultiple($mids);
 ## Créer un Media depuis un Fichier
 
 ```php
+use Drupal\Core\File\FileExists;
 use Drupal\media\Entity\Media;
-use Drupal\file\Entity\File;
 
-// Étape 1 — Créer l'entité File
-$file_path = \Drupal::service('file_system')->realpath('public://mon-image.jpg');
-$file_data = file_get_contents($file_path);
-$file = \Drupal\file\Entity\File::create();
-$file->setFileUri('public://images/mon-image.jpg');
-$file->setMimeType('image/jpeg');
-$file->setFilename('mon-image.jpg');
-$file->setPermanent();
-$file->save();
+// ✅ D10.3+ — file.repository->writeData() crée le File managé en une étape
+// (gère le déplacement physique + l'entité File). N'utilise PAS File::create()
+// + setFileUri() manuel : ça ne déplace pas le fichier physique.
+$data = file_get_contents('/chemin/source/mon-image.jpg');
+$file = \Drupal::service('file.repository')->writeData(
+  $data,
+  'public://images/mon-image.jpg',
+  FileExists::Rename,   // ← enum D10.3+, remplace FILE_EXISTS_RENAME / FileSystemInterface::EXISTS_*
+);
 
-// OU depuis une URL distante
-$file = system_retrieve_file(
-  'https://example.com/image.jpg',
-  'public://images/',
-  TRUE,     // TRUE = créer l'entité File managée
-  FILE_EXISTS_RENAME
+// OU depuis une URL distante — system_retrieve_file() est DÉPRÉCIÉ (D10.3+).
+// Utiliser le client HTTP + file.repository :
+$response = \Drupal::httpClient()->get('https://example.com/image.jpg');
+$file = \Drupal::service('file.repository')->writeData(
+  (string) $response->getBody(),
+  'public://images/image.jpg',
+  FileExists::Rename,
 );
 
 // Étape 2 — Créer l'entité Media
@@ -196,8 +197,14 @@ const imageUrl = included
 
 ## Nettoyer les Médias Orphelins
 
+> **Piège :** `file.usage->listUsage($file)` retourne l'usage du **File** — il
+> inclut le Media qui le porte, donc il n'est jamais vide pour un Media valide.
+> Ça ne dit PAS si le Media lui-même est référencé par un nœud. Pour tracker
+> les références **vers une entité Media**, utiliser le contrib `drupal/entity_usage`.
+
 ```php
-// Trouver les Media sans nœud qui les référence
+// ✅ Avec drupal/entity_usage (contrib) — tracke les références entrantes
+// vers n'importe quelle entité, y compris Media.
 function trouver_medias_orphelins(): array {
   $mids = \Drupal::entityQuery('media')
     ->condition('bundle', 'image')
@@ -205,15 +212,17 @@ function trouver_medias_orphelins(): array {
     ->accessCheck(FALSE)
     ->execute();
 
-  $orphelins = [];
-  foreach ($mids as $mid) {
-    // Vérifier si ce media est référencé quelque part
-    $usage = \Drupal::service('file.usage')->listUsage(
-      \Drupal\media\Entity\Media::load($mid)->get('field_media_image')->entity
-    );
+  $entity_usage = \Drupal::service('entity_usage.usage');
+  $storage = \Drupal::entityTypeManager()->getStorage('media');
 
-    if (empty($usage)) {
-      $orphelins[] = $mid;
+  $orphelins = [];
+  foreach (array_chunk($mids, 100) as $chunk) {
+    foreach ($storage->loadMultiple($chunk) as $media) {
+      // Sources qui référencent ce Media (nodes, paragraphs, blocks...)
+      $usage = $entity_usage->listSources($media);
+      if (empty($usage)) {
+        $orphelins[] = $media->id();
+      }
     }
   }
 
@@ -222,7 +231,6 @@ function trouver_medias_orphelins(): array {
 
 // Supprimer les orphelins (en batch)
 $orphelins = trouver_medias_orphelins();
-\Drupal::entityTypeManager()->getStorage('media')->delete(
-  Media::loadMultiple($orphelins)
-);
+$storage = \Drupal::entityTypeManager()->getStorage('media');
+$storage->delete($storage->loadMultiple($orphelins));
 ```

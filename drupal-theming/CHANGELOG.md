@@ -2,6 +2,23 @@
 
 ---
 
+## v1.3 — 2026-06-09
+
+**Bugs factuels corrigés :**
+- `build-pipeline.md` — corruption massive d'un remplacement automatique `ddev` → `docker compose exec php` : proxy BrowserSync (`https://mon-projet.docker compose exec php.site`), bloc service Node (`container_name`, labels `com.docker compose exec php.*`, `DDEV_SITENAME`/`DDEV_APPROOT`, chemins `.docker compose exec php/`) réécrits en Compose valide
+- `theme-anatomy.md` / `bem-storybook.md` — templates SDC nommés `card.html.twig` → `card.twig` ({id}.twig obligatoire, sinon composant non découvert)
+- `theme-anatomy.md` — suppression de `drush en sdc -y` (module inexistant en D10.3+/D11, SDC intégré au core) + note de version
+- `twig3-accessibility.md` — `item.is_currentPage` (inexistant) → `item.in_active_trail` pour `aria-current="page"`
+- `agents/theme-generator.md` — `drush theme:enable` (déprécié Drush 11) → `drush theme:install`
+
+**Ajouts :**
+- `agents/theme-generator.md` — section starterkit core officiel `php core/scripts/drupal generate-theme` (D10.3+/D11)
+- `SKILL.md` — entrée Quick Decision Table pour le générateur starterkit core
+- `README.md` — liste des fichiers remise à jour (18 fichiers : était figée sur 9, obsolète depuis v1.1/v1.2)
+- `lessons.md` — 5 nouvelles leçons (SDC `.twig`, `drush en sdc`, `is_currentPage`, `theme:enable`)
+
+---
+
 ## v1.2 — 2026-05-16
 
 **Nouvel agent :**
@@ -136,3 +153,4 @@
 | Skill version | Drupal testé | Notes |
 |--------------|-------------|-------|
 | v1.0 | D10, D11 | `classy` supprimé D10 — `stable9` recommandé |
+| v1.3 | D10.3, D11 | SDC core (pas de `drush en sdc`), templates SDC en `.twig`, `theme:install` |

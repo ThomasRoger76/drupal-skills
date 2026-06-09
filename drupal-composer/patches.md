@@ -110,28 +110,40 @@ Pour les projets avec beaucoup de patches, externaliser dans un fichier séparé
 
 ---
 
-## `composer-patches` v2 — Nouveau Format (plus robuste)
+## `composer-patches` v2 — Format Étendu (plus robuste)
+
+La v2 est stable depuis octobre 2025 (`2.0.0`). Elle conserve la clé `extra.patches`
+et reste rétrocompatible avec le format court de la v1 (`"description": "url"`).
+Sa nouveauté est le **format étendu** : une **liste d'objets** par package, qui permet
+`sha256` (intégrité), `depth` et `extra` par patch.
 
 ```bash
-# Installer la v2 (plus stable sur Composer 2)
-composer require "cweagans/composer-patches:^2.0@beta"
+# Installer la v2 (stable)
+composer require "cweagans/composer-patches:^2.0"
 ```
 
 ```json
 {
   "extra": {
-    "composer-patches": {
-      "drupal/paragraphs": {
-        "Fix translation issue": {
-          "source": "https://www.drupal.org/files/issues/...-3.patch",
-          "sha256": "abc123...",    ← Vérification d'intégrité du patch
+    "patches": {
+      "drupal/paragraphs": [
+        {
+          "description": "Fix #3412345 - translation crash",
+          "url": "https://www.drupal.org/files/issues/2024-01-15/paragraphs-fix-3412345-12.patch",
+          "sha256": "abc123...",
           "depth": 1
         }
-      }
+      ]
     }
   }
 }
 ```
+
+> ⚠️ Pièges de migration v1 → v2 :
+> - La clé reste `extra.patches` (et non `extra.composer-patches`).
+> - Le champ d'URL s'appelle `url` (et non `source`).
+> - Le format étendu est une **liste** `[ { ... } ]`, pas un objet `{ "desc": { ... } }`.
+> - v2 génère un `patches.lock.json` à committer pour des builds reproductibles.
 
 ---
 
@@ -199,8 +211,8 @@ composer install --no-interaction 2>&1 | grep -i "could not apply patch"
 ## Commandes Utiles
 
 ```bash
-# Lister tous les patches actifs
-composer show -d . | grep -A100 '"patches"'
+# Lister tous les patches déclarés dans composer.json
+composer config extra.patches 2>/dev/null || jq '.extra.patches' composer.json
 
 # Via drush — voir les modules avec patches
 drush php:eval "

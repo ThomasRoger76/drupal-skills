@@ -13,11 +13,14 @@ description: Configuration complète de la pile multilingue Drupal (4 modules co
 # 3. Interface Translation — traduction de l'UI
 # 4. Configuration Translation — traduction de la config
 
-drush en language content_translation locale config_translation -y
+docker compose exec php drush en language content_translation locale config_translation -y
 
 # Vérifier l'activation
-drush pm:list --status=enabled | grep -E "language|locale|config_translation|content_translation"
+docker compose exec php drush pm:list --status=enabled | grep -E "language|locale|config_translation|content_translation"
 ```
+
+> **Docker natif :** toutes les commandes `drush` de ce skill se lancent via `docker compose exec php drush ...`.
+> Adapter le nom du service (`php`, `app`...) selon votre `docker-compose.yml`.
 
 **Pourquoi cet ordre :** `content_translation` et `config_translation` dépendent de `language`. `locale` (Interface Translation) est indépendant mais doit être activé avant `config_translation`.
 
@@ -27,13 +30,13 @@ drush pm:list --status=enabled | grep -E "language|locale|config_translation|con
 
 ```bash
 # Via Drush
-drush language:add fr
-drush language:add en
-drush language:add de
+docker compose exec php drush language:add fr
+docker compose exec php drush language:add en
+docker compose exec php drush language:add de
 
 # Définir la langue par défaut du site
-drush config:set system.site langcode fr -y
-drush config:set system.site default_langcode fr -y
+docker compose exec php drush config:set system.site langcode fr -y
+docker compose exec php drush config:set system.site default_langcode fr -y
 ```
 
 ```yaml
@@ -51,19 +54,34 @@ locked: false
 
 ## Configuration de la Négociation de Langue
 
+La négociation s'écrit dans **deux** fichiers de config core : `language.types.yml`
+(méthodes activées + poids par type de langue) et `language.negotiation.url.yml`
+(préfixes ou domaines). Le fichier `language.negotiation.yml` n'existe pas.
+
 ```yaml
-# config/install/language.negotiation.yml
+# config/sync/language.types.yml
 langcode: fr
 status: true
-id: language_interface
-
-# Méthodes de détection, par ordre de priorité :
-method_weights_language_interface:
-  url: -8              # Priorité la plus haute : URL préfixe ou domaine
-  session: -6
-  user: -4
-  browser: -2          # Détection depuis Accept-Language header
-  selected_langcode: 12
+# Types de langue gérables par l'utilisateur
+configurable:
+  - language_interface
+  - language_content
+  - language_url
+negotiation:
+  language_interface:
+    enabled:
+      # Plus le poids est bas, plus la priorité est haute
+      language-url: -8          # URL préfixe ou domaine
+      language-session: -6
+      language-user: -4
+      language-browser: -2      # Accept-Language header
+      language-selected: 12     # Langue par défaut (toujours en dernier)
+    method_weights:
+      language-url: -8
+      language-session: -6
+      language-user: -4
+      language-browser: -2
+      language-selected: 12
 ```
 
 **Via l'UI :** `/admin/config/regional/language/detection`
@@ -71,24 +89,29 @@ method_weights_language_interface:
 ### URL Prefix — Configuration
 
 ```yaml
-# config/install/language.negotiation.yml
-method_weights_language_url:
-  prefixes:
-    fr: fr         # /fr/chemin → langue française
-    en: en         # /en/path → langue anglaise
-    de: de         # /de/pfad → langue allemande
-  domains: {}      # Pas de domaines séparés
+# config/sync/language.negotiation.url.yml
+langcode: fr
+status: true
+source: path_prefix      # 'path_prefix' (préfixes) ou 'domain' (domaines)
+prefixes:
+  fr: fr                 # /fr/chemin → langue française
+  en: en                 # /en/path → langue anglaise
+  de: de                 # /de/pfad → langue allemande
+domains: {}              # Pas de domaines séparés
 ```
 
 ### Domain — Configuration (Sites Multidomaines)
 
 ```yaml
-method_weights_language_url:
-  prefixes: {}     # Pas de préfixes
-  domains:
-    fr: fr.mon-site.com
-    en: en.mon-site.com
-    de: de.mon-site.com
+# config/sync/language.negotiation.url.yml
+langcode: fr
+status: true
+source: domain           # Bascule en mode domaine
+prefixes: {}             # Pas de préfixes
+domains:
+  fr: fr.mon-site.com
+  en: en.mon-site.com
+  de: de.mon-site.com
 ```
 
 **Note :** le mode domaine nécessite des DNS et certificats SSL par domaine. Le mode préfixe est plus simple.
@@ -175,7 +198,7 @@ function mon_theme_preprocess_html(array &$variables): void {
 ```bash
 # Installer Pathauto pour les alias URL
 composer require drupal/pathauto
-drush en pathauto -y
+docker compose exec php drush en pathauto -y
 ```
 
 ```yaml
@@ -226,25 +249,25 @@ visibility: {}
 
 ```bash
 # Lister les langues
-drush language:info
+docker compose exec php drush language:info
 
 # Ajouter une langue
-drush language:add es
+docker compose exec php drush language:add es
 
 # Supprimer une langue (avec tous ses contenus traduits !)
-drush language:delete es
+docker compose exec php drush language:delete es
 
 # Importer des traductions .po
-drush locale:import fr fichier.fr.po
+docker compose exec php drush locale:import fr fichier.fr.po
 
 # Mettre à jour les traductions contrib depuis drupal.org
-drush locale:update
+docker compose exec php drush locale:update
 
 # Exporter les traductions personnalisées
-drush locale:export fr --types=customized > custom.fr.po
+docker compose exec php drush locale:export fr --types=customized > custom.fr.po
 
 # Vérifier le statut des traductions
-drush locale:check
+docker compose exec php drush locale:check
 ```
 
 ---
@@ -253,20 +276,20 @@ drush locale:check
 
 ```bash
 # 1. Les 4 modules sont actifs
-drush pm:list --status=enabled | grep -E "language|locale|config_translation|content_translation"
+docker compose exec php drush pm:list --status=enabled | grep -E "language|locale|config_translation|content_translation"
 
 # 2. La langue par défaut est correcte
-drush config:get system.site langcode
+docker compose exec php drush config:get system.site langcode
 
 # 3. La négociation de langue est configurée
-drush php:eval "var_dump(\Drupal::service('language.negotiator')->getNegotiationMethods());"
+docker compose exec php drush php:eval "var_dump(\Drupal::service('language.negotiator')->getNegotiationMethods());"
 
 # 4. Le préfixe URL fonctionne
 curl -I https://mon-site.com/fr/ | grep -i "content-language\|x-drupal"
 
 # 5. Les traductions de config sont actives
-drush php:eval "echo \Drupal::moduleHandler()->moduleExists('config_translation') ? 'OK' : 'MANQUE';"
+docker compose exec php drush php:eval "echo \Drupal::moduleHandler()->moduleExists('config_translation') ? 'OK' : 'MANQUE';"
 
 # 6. Watchdog pour les erreurs de langue
-drush watchdog:show --type=locale --count=20
+docker compose exec php drush watchdog:show --type=locale --count=20
 ```

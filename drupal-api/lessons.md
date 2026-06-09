@@ -47,3 +47,25 @@ Incidents en projets headless/decoupled réels. Mis à jour après chaque résol
 - **Cause :** JSON:API expose par défaut tous les champs d'une entité auxquels l'utilisateur a accès
 - **Correct :** `drupal/jsonapi_extras` → désactiver les champs sensibles (pass, login, access, field_internal_token)
 - **Prévention :** Toujours auditer les champs exposés par JSON:API avant la mise en production — installer jsonapi_extras dès le début
+
+---
+
+## 2026-06-09 — Conformité D11 & environnement
+
+### `localhost` dans `allowedOrigins` poussé en production → faille CORS
+- **Symptôme :** Une origin `http://localhost:3000` codée en dur dans `services.yml` se retrouve autorisée en prod
+- **Cause :** `services.yml` est commité tel quel, sans variation par environnement (pas de support de variables)
+- **Correct :** Piloter `allowedOrigins` par `getenv('CORS_ALLOWED_ORIGINS')` dans `settings.php`, ou n'ajouter les origins de dev que dans `settings.local.php` (non commité) / via config_split
+- **Prévention :** Aucune origin `localhost`/`*` dans la config commitée. CORS = whitelist stricte par environnement
+
+### RestResource en annotation `@RestResource` → dépréciation D11
+- **Symptôme :** Avertissements de dépréciation, plugin non détecté après montée de version
+- **Cause :** Les annotations de plugins sont dépréciées au profit des attributs PHP depuis D10.2
+- **Correct :** Déclarer `#[RestResource(...)]`, `#[QueueWorker(...)]` (imports `Drupal\rest\Attribute\RestResource`, `Drupal\Core\Queue\Attribute\QueueWorker`)
+- **Prévention :** Tout nouveau plugin custom en attribut PHP sur D10.2+/D11
+
+### `\DateTime::ISO8601` dans un payload API → date non conforme RFC 3339
+- **Symptôme :** Le frontend parse mal la date (`+0000` sans `:`), incohérence avec les dates JSON:API
+- **Cause :** La constante `\DateTime::ISO8601` est buguée/dépréciée (non conforme RFC 3339)
+- **Correct :** `\DateTimeInterface::ATOM` (alias de `\DateTime::RFC3339`)
+- **Prévention :** Toujours `ATOM`/RFC 3339 pour les dates exposées en API ; préférer `\DateTimeImmutable`

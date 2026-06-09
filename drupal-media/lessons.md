@@ -41,3 +41,31 @@ Bugs Media rencontrés en projets Drupal réels.
 - **Cause :** `$media->get('field_media_image')->alt` retourne l'alt de la langue d'origine
 - **Correct :** `$media = entity.repository->getTranslationFromContext($media)` avant d'accéder aux champs
 - **Prévention :** Activer `content_translation` sur le Media type + `getTranslationFromContext()` dans les preprocess
+
+---
+
+## 2026-06-09 — Audit qualité D11
+
+### `system_retrieve_file()` + `FILE_EXISTS_*` dépréciés en D10.3+
+- **Symptôme :** `Deprecated function` au runtime / fail des tests `@group legacy` après montée D10.3 ou D11
+- **Cause :** `system_retrieve_file()` et les constantes `FILE_EXISTS_*` / `FileSystemInterface::EXISTS_*` dépréciés depuis Drupal 10.3
+- **Correct :** `httpClient()->get()` + `file.repository->writeData()` / `->copy()` avec l'enum `\Drupal\Core\File\FileExists`
+- **Prévention :** `grep -rn "system_retrieve_file\|EXISTS_RENAME\|EXISTS_REPLACE\|FILE_EXISTS_" web/modules/custom/` avant tout upgrade
+
+### `File::create()` + `setFileUri()` ne déplace pas le fichier physique
+- **Symptôme :** Entité File créée mais fichier introuvable sur disque (image cassée, taille 0)
+- **Cause :** `File::create(['uri' => ...])` n'enregistre qu'une référence ; il ne copie/déplace aucun fichier
+- **Correct :** `file.repository->writeData($data, $uri, FileExists::Rename)` gère déplacement physique + entité managée
+- **Prévention :** Toujours passer par `file.repository` pour matérialiser un fichier, jamais `File::create()` seul
+
+### Détection de Media orphelin via `file.usage` — faux négatifs systématiques
+- **Symptôme :** `trouver_medias_orphelins()` ne retourne jamais rien alors que des médias sont visiblement inutilisés
+- **Cause :** `file.usage->listUsage($file)` tracke l'usage du File (qui inclut le Media porteur), pas les références Media→Node
+- **Correct :** `drupal/entity_usage` → `$entity_usage->listSources($media)` pour les références entrantes vers le Media
+- **Prévention :** `file.usage` = niveau fichier uniquement ; pour les entités de contenu utiliser `entity_usage`
+
+### Annotations `@MediaSource` / `@MigrateSource` dépréciées
+- **Symptôme :** Avertissements de dépréciation, plugins non découverts après montée D11
+- **Cause :** Les annotations Doctrine sont dépréciées au profit des attributs PHP natifs (D10.2+), supprimées en D12
+- **Correct :** `#[MediaSource(...)]` / `#[MigrateSource(...)]` avec `new TranslatableMarkup()` pour les labels
+- **Prévention :** Tout nouveau plugin en attribut PHP ; convertir les annotations lors des refactos

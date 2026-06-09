@@ -2,6 +2,40 @@
 
 ---
 
+## v1.2 — 2026-06-09
+
+**Audit qualité — correction de défauts réels (cohérence Docker natif + PHPUnit 10/11) :**
+
+`infrastructure.md`
+- Artefacts de remplacement automatique DDEV→Docker corrigés : `.docker compose exec php/config.yaml` (nom de fichier corrompu) remplacé par un vrai exemple `docker-compose.yml` ; commentaires fantômes « # module non nécessaire » et `docker compose restart php` remplacés par un service `selenium/standalone-chrome` + `docker compose up -d selenium`
+- Solution tronquée du tableau troubleshooting ChromeDriver complétée
+- Ligne dupliquée parasite (bootstrap) retirée du tableau Behat vs PHPUnit
+- `phpunit.xml` : `printerClass` (supprimé en PHPUnit 10) → extension `HtmlOutputLogger` ; ajout `cacheDirectory` / `failOnWarning` ; bloc couverture migré de `<coverage><include>` vers `<source>` (syntaxe PHPUnit 10/11)
+- Section « Annotations PHPUnit » réécrite : attributs PHP présentés comme standard D11, annotations docblock comme forme historique dépréciée
+
+`javascript-tests.md`
+- Mêmes artefacts Selenium corrigés (bloc d'install + troubleshooting `docker compose up -d selenium`)
+
+`static-analysis.md`
+- Pipeline GitLab CI : suppression des `docker compose exec php …` à l'intérieur de jobs CI (le job tourne déjà dans le container) pour phpcs et infection — appel direct de `vendor/bin`
+
+`tdd-cicd.md`
+- `phpunit.xml` couverture : `<include>/<exclude>` déplacés de `<coverage>` vers `<source>` (PHPUnit 10/11)
+
+`drupal-test-traits.md`
+- `phpunit.xml` : `verbose="true"` (supprimé en PHPUnit 10) → `displayDetailsOnTestsThatTriggerWarnings` + `cacheDirectory`
+
+`unit-tests.md`
+- `@covers ::calculer` (docblock) → `#[CoversMethod('calculer')]` pour cohérence avec le reste du fichier (attributs PHP)
+
+`SKILL.md`
+- Anti-pattern coverage : `forceCoversAnnotation` (supprimé en PHPUnit 10) remplacé par `--min-coverage` / `requireCoverageMetadata`
+
+`lessons.md`
+- 3 leçons ajoutées : schéma `phpunit.xml` PHPUnit 9 vs 10/11, `docker compose exec` interdit en CI, Selenium comme service Docker Compose
+
+---
+
 ## v1.1 — 2026-05-16
 
 **Bug bash corrigé :**

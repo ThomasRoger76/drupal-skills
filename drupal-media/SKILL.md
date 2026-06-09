@@ -40,7 +40,7 @@ Référentiel complet du système Media Drupal 8-11+ (core depuis D8.6) : Media 
 | Responsive images (srcset) | `breakpoints.yml` + Responsive Image Style | [media-library.md](media-library.md) |
 | MediaWidget dans un formulaire custom | `entity_reference` field avec Media Library widget | [media-programmatic.md](media-programmatic.md) |
 | Référencer un Media depuis JSON:API | `?include=field_image.field_media_image` | [media-programmatic.md](media-programmatic.md) |
-| Nettoyer les médias orphelins | Module `media_entity_file_replace` ou cron custom | [media-programmatic.md](media-programmatic.md) |
+| Nettoyer les médias orphelins | `drupal/entity_usage` (`listSources()`) — pas `file.usage` | [media-programmatic.md](media-programmatic.md) |
 | **Recadrage manuel par le rédacteur** | `drupal/image_widget_crop` — crop zones configurables | [media-library.md](media-library.md) |
 | **Images SVG nativement dans Drupal** | `drupal/svg_image` — render les SVG inline ou via `<img>` | [media-types.md](media-types.md) |
 | Téléchargement de média avec bouton | `drupal/media_entity_download` — ajoute un lien download | [media-library.md](media-library.md) |
@@ -79,6 +79,11 @@ Référentiel complet du système Media Drupal 8-11+ (core depuis D8.6) : Media 
 | Chemin de fichier hardcodé | `$file->getFileUri()` | Dépend de l'environnement |
 | oEmbed sans whitelist de domaines | Configurer `oEmbed providers` | SSRF possible |
 | Media non traduit sur site multilingue | Activer content_translation sur Media | Alt text en mauvaise langue |
+| `system_retrieve_file()` pour télécharger un fichier | `httpClient()->get()` + `file.repository->writeData()` | Déprécié D10.3+ |
+| `FILE_EXISTS_*` / `FileSystemInterface::EXISTS_*` | enum `\Drupal\Core\File\FileExists` | Déprécié D10.3+ |
+| Annotation `@MediaSource` / `@MigrateSource` | Attribut PHP `#[MediaSource]` / `#[MigrateSource]` | Annotations supprimées D12 |
+| `File::create()` + `setFileUri()` sans déplacer le fichier | `file.repository->writeData()` / `->copy()` | Fichier physique absent |
+| `file.usage` pour détecter un Media orphelin | `drupal/entity_usage` → `listSources()` | `file.usage` ne tracke pas Media→Node |
 
 ## Évolution par Version Majeure
 
@@ -90,6 +95,9 @@ Référentiel complet du système Media Drupal 8-11+ (core depuis D8.6) : Media 
 | WebP dans Image Styles | ❌ | ❌ | ✅ | ✅ |
 | `file_create_url()` | ✅ | ⚠️ deprecated | ❌ supprimé | ❌ |
 | `file_url_generator` service | ❌ | ✅ | ✅ standard | ✅ |
+| `system_retrieve_file()` | ✅ | ✅ | ⚠️ deprecated (10.3) | ⚠️ deprecated |
+| enum `FileExists` (vs `EXISTS_*`) | ❌ | ❌ | ✅ (10.3) | ✅ standard |
+| Attributs PHP plugins (`#[MediaSource]`) | ❌ | ❌ | ✅ (10.2) | ✅ standard |
 | Focal Point (contrib) | ✅ | ✅ | ✅ | ✅ |
 
 ## Auto-Amélioration

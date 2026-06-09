@@ -150,7 +150,49 @@ foreach ($nodes as $node) {
 }
 ```
 
-**Important :** `->condition('langcode', 'fr')` filtre les nœuds qui ONT une traduction FR. Les nœuds sans traduction FR ne sont pas retournés.
+**Piège majeur :** `->condition('langcode', 'fr')` ne filtre PAS les nœuds qui ONT une
+traduction FR — il filtre les nœuds dont la **langue d'origine** est FR. Un article
+créé en EN puis traduit en FR a `langcode = 'en'` : il sera EXCLU par ce filtre.
+
+### Chercher les entités AYANT une traduction dans une langue donnée
+
+```php
+// ✅ Cibler la donnée de traduction, pas seulement l'original.
+// La table node_field_data stocke une ligne par traduction (langcode + default_langcode).
+// EntityQuery interroge cette table : on combine langcode au filtre de langue
+// de requête pour ne garder que les lignes de traduction FR.
+$nids = \Drupal::entityQuery('node')
+  ->condition('type', 'article')
+  ->condition('status', 1)
+  ->condition('langcode', 'fr')        // ligne de traduction FR (original OU traduit)
+  ->accessCheck(TRUE)
+  ->execute();
+
+// La query ci-dessus retourne bien les nœuds dont la LIGNE langcode=fr existe,
+// y compris ceux dont l'original est EN avec une traduction FR — à condition
+// d'interroger la donnée de traduction. Si vos résultats ne remontent que les
+// originaux, c'est que la requête est restreinte au default_langcode :
+$query = \Drupal::entityQuery('node')
+  ->condition('type', 'article')
+  ->condition('status', 1)
+  ->accessCheck(TRUE);
+// Forcer la prise en compte de toutes les langues de traduction :
+$query->getMetaData('langcode'); // n/a — voir note ci-dessous
+$nids = $query->execute();
+
+// Pour ne récupérer QUE les originaux (default translation) :
+$nids = \Drupal::entityQuery('node')
+  ->condition('langcode', 'fr')
+  ->condition('default_langcode', 1)   // 1 = c'est la langue d'origine
+  ->accessCheck(TRUE)
+  ->execute();
+```
+
+**Règle pratique :** pour « tous les contenus disposant d'une traduction FR, quelle que
+soit leur langue d'origine », préférer une **Views** avec *Translation Language →
+Current user's language* (voir [multilingual-views.md](multilingual-views.md)) ou une
+requête SQL directe sur `node_field_data` filtrée sur `langcode = 'fr'`. EntityQuery
+sans `default_langcode` interroge déjà la donnée de traduction.
 
 ---
 
@@ -212,8 +254,8 @@ function mon_theme_preprocess_node_mauvais(array &$variables): void {
 # /admin/config/regional/content-language
 
 # Via config :
-# language.negotiation.yml → language_content
-# language_content.settings.yml → fallback configuré
+# language.types.yml → négociation du type language_content
+# Le fallback de contenu suit l'ordre des langues + hook_language_fallback_candidates_alter()
 
 # Via PHP :
 $language_manager = \Drupal::languageManager();
@@ -252,10 +294,10 @@ $terms_fr = $fr_node->get('field_categories')->referencedEntities();
 
 ```bash
 # Lister les langues du site
-drush php:eval "foreach (\Drupal::languageManager()->getLanguages() as \$lang) { echo \$lang->getId() . ': ' . \$lang->getName() . PHP_EOL; }"
+docker compose exec php drush php:eval "foreach (\Drupal::languageManager()->getLanguages() as \$lang) { echo \$lang->getId() . ': ' . \$lang->getName() . PHP_EOL; }"
 
 # Compter les traductions par langue
-drush php:eval "
+docker compose exec php drush php:eval "
 \$storage = \Drupal::entityTypeManager()->getStorage('node');
 foreach (['fr', 'en', 'de'] as \$lang) {
   \$count = \$storage->getQuery()->condition('langcode', \$lang)->condition('status', 1)->accessCheck(FALSE)->count()->execute();
@@ -264,5 +306,5 @@ foreach (['fr', 'en', 'de'] as \$lang) {
 "
 
 # Créer une traduction en masse (script Drush)
-drush php:script translate_batch.php
+docker compose exec php drush php:script translate_batch.php
 ```

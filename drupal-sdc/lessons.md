@@ -16,7 +16,7 @@ Erreurs SDC découvertes en projet Drupal 10.3+/D11.
 - **Symptôme :** Une prop `url` reçoit un objet `Url` Drupal au lieu d'une string — Twig rend un objet vide
 - **Cause :** Props non typées dans `.component.yml` — aucune validation ni conversion
 - **Correct :** Déclarer `url: { type: string, format: uri }` dans les props + convertir l'objet avant de passer la prop
-- **Prévention :** Activer `sdc.debug: true` dans services.yml en développement — la validation stricte prévient ces erreurs
+- **Prévention :** Activer `sdc.enforce_schemas: true` dans services.yml en développement — la validation stricte prévient ces erreurs (le paramètre `sdc.debug` n'existe pas dans le core)
 
 ### 2026-05-16 — JS double-initialisation — Drupal.behaviors non utilisé
 
@@ -32,12 +32,28 @@ Erreurs SDC découvertes en projet Drupal 10.3+/D11.
 - **Correct :** `drush cr` après chaque création ou renommage de composant SDC
 - **Prévention :** En développement, ajouter `auto_reload: true` dans `services.yml` pour Twig + `drush cr` après création
 
-### 2026-05-16 — Slot non rendu — `{{ badge }}` au lieu de `{{ slots.badge }}`
+### 2026-06-08 — Service SDC : `plugin.manager.sdc`, jamais `sdc.component_registry`
 
-- **Symptôme :** Le contenu passé dans un slot SDC n'apparaît pas dans le template
-- **Cause :** `{{ badge }}` dans le template Twig au lieu de `{{ slots.badge }}`
-- **Correct :** Dans les templates SDC : toujours `{{ slots.NOM_SLOT }}` pour les slots déclarés dans `.component.yml`
-- **Prévention :** Props = `{{ title }}` / Slots = `{{ slots.footer }}`
+- **Symptôme :** `drush php:eval` de debug lève `You have requested a non-existent service "sdc.component_registry"`.
+- **Cause :** Le service `sdc.component_registry` n'existe pas. Le registre SDC est la classe
+  `ComponentPluginManager`, exposée sous l'ID `plugin.manager.sdc`.
+- **Correct :** `\Drupal::service('plugin.manager.sdc')` → `getDefinitions()` (liste, clés = IDs)
+  et `find('mon_theme:card')` (instance `Component`, avec `->metadata`).
+- **Prévention :** Lister via `array_keys($manager->getDefinitions())`. La métadonnée props/slots
+  est dans `$component->metadata->schema`.
+
+### 2026-06-08 — Slot rendu via `{{ nom_slot }}`, PAS `{{ slots.nom_slot }}`
+
+- **Symptôme :** Confusion sur la variable Twig à utiliser pour un slot.
+- **Cause :** Croyance erronée qu'un slot s'accède via un objet `slots.*`. SDC injecte
+  les slots ET les props comme variables Twig de premier niveau dans le contexte du
+  composant (cf. `ComponentNodeVisitor` / `mergeAdditionalRenderContext` dans le core).
+- **Correct :** Props ET slots s'utilisent pareil : `{{ title }}`, `{{ badge }}`, `{{ footer }}`.
+  Côté appelant, un slot se remplit avec `{% embed %}` + `{% block badge %}…{% endblock %}`,
+  et la prop avec `with { title: '...' }`.
+- **Prévention :** Ne jamais écrire `{{ slots.badge }}` — la variable n'existe pas.
+  La distinction props/slots est dans le `.component.yml` et la façon de PASSER la valeur,
+  pas dans la façon de la LIRE en Twig.
 
 ### 2026-05-16 — CSS SDC non chargé — fichier mal nommé
 
@@ -49,6 +65,6 @@ Erreurs SDC découvertes en projet Drupal 10.3+/D11.
 ### 2026-05-16 — Props validation silencieuse en prod — bug invisible
 
 - **Symptôme :** Une prop avec mauvais type dégrade l'affichage sans erreur visible
-- **Cause :** `sdc.debug: false` en production désactive la validation stricte des props
+- **Cause :** `sdc.enforce_schemas: false` (défaut en production) désactive la validation stricte des props
 - **Correct :** Écrire des tests Functional qui vérifient le rendu SDC avec données invalides
-- **Prévention :** `sdc.debug: true` en dev (`services.yml`), tests PHPUnit pour les cas limites en prod
+- **Prévention :** `sdc.enforce_schemas: true` en dev (`services.yml`), tests PHPUnit pour les cas limites en prod

@@ -113,7 +113,9 @@ public function build(EmailInterface $email): void {
 
 Commande : {{ commande.reference.value }}
 Total : {{ commande.montant.value|number_format(2, ',', ' ') }} €
-Client : {{ commande.get('uid').entity.displayname }}
+Client : {{ commande.uid.entity.displayName }}
+{# .displayName appelle getDisplayName() via le getter magique Twig.
+   commande.uid.entity = la User entity référencée par le champ uid. #}
 ```
 
 ---

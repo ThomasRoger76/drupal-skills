@@ -67,6 +67,15 @@ $render = [
   '#arguments' => [42],
   '#embed' => TRUE,          // TRUE = pas de page entière, juste le contenu
 ];
+
+// ── Méthode 4 : executeDisplay() — build + execute + render en un appel ────
+// Le plus concis pour obtenir un render array d'un display avec arguments.
+$view4 = Views::getView('ma_view');
+if ($view4 && $view4->access('block_1')) {
+  // Définit le display, passe les args, exécute et retourne le render array.
+  $render_array = $view4->executeDisplay('block_1', [42]);
+}
+// preview() = identique mais sans vérifier l'accès (utile en admin/preview).
 ```
 
 ---

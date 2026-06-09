@@ -158,41 +158,53 @@ deploy:
 
 ## OPcache Preload (PHP 7.4+)
 
-Precharge les classes PHP fréquentes en mémoire au démarrage. Réduit le temps de la première requête.
+> **⚠️ Drupal ne supporte PAS officiellement `opcache.preload`.** Drupal core n'a pas de
+> fichier de preload fourni, et un preload naïf casse PHP-FPM au démarrage. Ne PAS activer
+> sans benchmark ni test de charge. Sur la majorité des projets, OPcache classique + APCu
+> suffisent largement. Voir l'issue Drupal #3055735.
+
+**Pourquoi un preload naïf est dangereux :**
 
 ```php
-// opcache-preload.php — à configurer dans php.ini
-<?php
-
-// Precharger les classes Drupal core les plus utilisées
-$files = [
-  __DIR__ . '/vendor/autoload.php',
-  // Ajouter les classes les plus fréquentes de votre Drupal
-];
-
-foreach ($files as $file) {
-  if (file_exists($file)) {
-    opcache_compile_file($file);
-  }
-}
-
-// Pour Drupal : générer automatiquement la liste des fichiers les plus utilisés
-$vendor_dir = __DIR__ . '/vendor';
-$iterator = new RecursiveIteratorIterator(
-  new RecursiveDirectoryIterator($vendor_dir)
-);
-
+// ❌ NE JAMAIS FAIRE — compiler tout vendor/ brutalement
+// → fatal errors au boot PHP-FPM : "Cannot declare class ... already in use",
+//   classes avec dépendances non résolvables, traits/interfaces dans le désordre,
+//   code conditionnel (if class_exists) compilé hors contexte.
+$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('vendor'));
 foreach ($iterator as $file) {
   if ($file->getExtension() === 'php') {
-    opcache_compile_file($file->getPathname());
+    opcache_compile_file($file->getPathname());  // ← casse le démarrage
+  }
+}
+```
+
+**Approche correcte (si vraiment nécessaire) :** ne précharger qu'une liste curée et stable
+de classes "feuilles" (sans dépendances non résolvables), via `opcache_compile_file()`,
+en testant le redémarrage PHP-FPM après chaque ajout. Tolérer les erreurs avec un `try/catch`.
+
+```php
+// opcache-preload.php — liste curée, tolérante aux erreurs
+<?php
+$classmap = require __DIR__ . '/vendor/composer/autoload_classmap.php';
+foreach ($classmap as $class => $path) {
+  // Cibler uniquement le code applicatif stable, jamais tout vendor/
+  if (!str_contains($path, '/vendor/symfony/')) {
+    continue;
+  }
+  try {
+    opcache_compile_file($path);
+  }
+  catch (\Throwable $e) {
+    // Une classe non préchargeable ne doit jamais casser le boot
   }
 }
 ```
 
 ```ini
-# php.ini — activer le preload
+# php.ini — activer le preload (uniquement après validation)
 opcache.preload = /var/www/html/opcache-preload.php
-opcache.preload_user = www-data  ; Obligatoire en PHP 7.4-8.x
+# preload_user requis SEULEMENT si PHP-FPM démarre en root (sinon optionnel) :
+opcache.preload_user = www-data
 ```
 
 ---
@@ -238,7 +250,7 @@ if (!$data = apcu_fetch($cid)) {
 [ ] memory_consumption >= 128MB
 [ ] max_accelerated_files >= 10000
 [ ] JIT activé si usage intensif CPU (migrations, batch)
-[ ] Preload configuré si PHP 8.0+ (optionnel)
+[ ] Preload : NON par défaut — Drupal ne le supporte pas officiellement (cf. section dédiée)
 [ ] APCu pour le cache bootstrap Drupal
 [ ] drush cr après chaque déploiement
 [ ] Monitoring : hit_rate > 90% = bien configuré

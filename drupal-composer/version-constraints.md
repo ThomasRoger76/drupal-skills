@@ -170,14 +170,27 @@ composer depends drupal/core --tree
 # composer.lock = snapshot exact de toutes les versions installées
 # TOUJOURS committer composer.lock en production → reproductibilité
 
-# Regénérer composer.lock depuis composer.json
-composer update --lock    # ← Only updates the lock file hash
+# Resynchroniser le hash du lock après une édition manuelle de composer.json
+# (NE met PAS à jour les versions des packages — uniquement le content-hash)
+composer update --lock
 
 # Vérifier que lock et json sont cohérents
 composer validate --strict
 
 # Installer EXACTEMENT les versions du lock (CI, production)
 composer install  # → utilise le lock, pas le json
+```
+
+### `composer bump` — Aligner les contraintes sur les versions installées
+
+```bash
+# Composer 2.4+ : remonte les contraintes de composer.json au minimum
+# réellement installé (ex: "^1.15" → "^1.18" si 1.18 est dans le lock).
+# Utile pour figer un plancher cohérent avant un commit / une release.
+composer bump
+
+# Sans toucher require-dev
+composer bump --dev-only=false
 ```
 
 **Bonnes pratiques :**

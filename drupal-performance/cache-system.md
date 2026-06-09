@@ -35,8 +35,18 @@ Le Page Cache stocke la réponse HTTP **complète** (HTML + headers) pour les ut
 // Vérifier si Page Cache est actif
 \Drupal::moduleHandler()->moduleExists('page_cache'); // TRUE si actif
 
-// Forcer l'exclusion d'une page du Page Cache
-// Dans un EventSubscriber sur KernelEvents::RESPONSE :
+// Forcer l'exclusion d'une page du Page Cache — pattern Drupal natif.
+// Dans un controller : retourner une réponse avec max-age 0 via CacheableMetadata.
+// C'est ce que lit le module page_cache (pas seulement les headers HTTP bruts).
+use Drupal\Core\Cache\CacheableMetadata;
+$build['#cache']['max-age'] = 0;   // sur le render array → page jamais mise en Page Cache
+
+// Sur une CacheableResponse (controller renvoyant un objet Response) :
+$metadata = new CacheableMetadata();
+$metadata->setCacheMaxAge(0);
+$response->addCacheableDependency($metadata);
+
+// Sur une réponse Symfony brute (non cacheable) :
 $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
 $response->setMaxAge(0);
 $response->setSharedMaxAge(0);
@@ -61,7 +71,10 @@ Dynamic Page Cache met en cache les **parties invariantes** d'une page et les co
 $build['mon_bloc'] = [
   '#markup' => $this->t('Bonjour @name', ['@name' => $user->getDisplayName()]),
   '#cache' => [
-    'contexts' => ['user'],     // Différent par utilisateur → pas mis en cache DPC
+    // Le DPC met BIEN en cache ce bloc — une variante distincte par utilisateur.
+    // 'user' est très granulaire : préférer 'user.roles' si le contenu ne dépend
+    // que du rôle. C'est 'max-age' => 0 (et non le context 'user') qui exclut du DPC.
+    'contexts' => ['user'],
     'tags' => ['user:' . $user->id()],
     'max-age' => 3600,
   ],

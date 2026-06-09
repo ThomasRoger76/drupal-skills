@@ -31,6 +31,10 @@ Référentiel complet du multilinguisme Drupal 8-11+ : pile de modules multiling
 
 **Règle :** activer les 4 modules core dans cet ordre. Configurer Language en premier.
 
+> **Convention d'exécution — Docker natif.** Toutes les commandes `drush` de ce skill
+> se lancent via `docker compose exec php drush ...` (jamais `ddev`). Adapter le nom du
+> service (`php`, `app`...) au `docker-compose.yml` du projet.
+
 ---
 
 ## Quick Decision Table
@@ -51,8 +55,8 @@ Référentiel complet du multilinguisme Drupal 8-11+ : pile de modules multiling
 | Traduire un menu, un bloc, une View | Configuration Translation module + UI | [config-translation.md](config-translation.md) |
 | Traduire la config programmatiquement | `LanguageManager::getLanguageConfigOverride()` | [config-translation.md](config-translation.md) |
 | Traduire les chaînes d'un module | Interface Translation module + fichiers `.po` | [interface-translation.md](interface-translation.md) |
-| Importer des traductions `.po` | `drush locale:import fr fichier.po` | [interface-translation.md](interface-translation.md) |
-| Mettre à jour les traductions contrib | `drush locale:update` | [interface-translation.md](interface-translation.md) |
+| Importer des traductions `.po` | `docker compose exec php drush locale:import fr fichier.po` | [interface-translation.md](interface-translation.md) |
+| Mettre à jour les traductions contrib | `docker compose exec php drush locale:update` | [interface-translation.md](interface-translation.md) |
 | Traduire une chaîne dans PHP | `$this->t('Chaîne', [], ['langcode' => 'fr'])` | [interface-translation.md](interface-translation.md) |
 | Views filtrées par langue courante | Field Language → "Interface text language selected for page" | [multilingual-views.md](multilingual-views.md) |
 | Views avec sélecteur de langue exposé | Exposed filter sur `langcode` | [multilingual-views.md](multilingual-views.md) |
@@ -64,7 +68,7 @@ Référentiel complet du multilinguisme Drupal 8-11+ : pile de modules multiling
 | Générer une URL dans une langue spécifique | `Url::fromRoute(..., [], ['language' => $language])` | [content-translation.md](content-translation.md) |
 | Langue fallback si traduction manquante | Language Fallback dans Content Language config | [multilingual-setup.md](multilingual-setup.md) |
 | **`drush locale:import` — màj sans écraser les traductions custom** | `--override=none` (1er import) vs `--override=all` (mise à jour — remplace tout) | [interface-translation.md](interface-translation.md) |
-| **Détecter la langue depuis l'IP (geolocation)** | Language Negotiation → `drupal/language_cookie` ou `drupal/geoip_language` | [language-negotiation.md](language-negotiation.md) |
+| **Détecter la langue depuis l'IP (geolocation)** | Language Negotiation → module contrib `drupal/smart_ip` + `drupal/geoip` (résolution IP→pays puis map pays→langue) | [language-negotiation.md](language-negotiation.md) |
 | **Tester la langue courante dans un préprocess** | `$language = \Drupal::service('language_manager')->getCurrentLanguage()->getId()` | [content-translation.md](content-translation.md) |
 | **Cache multilingual — contexte manquant** | Toujours `#cache['contexts'][] = 'languages:language_interface'` sur les render arrays avec texte traduit | [multilingual-setup.md](multilingual-setup.md) |
 | **Importer du contenu traduit en masse** | Migrate API — `destination.translations: true` dans le YAML migrate | [content-translation.md](content-translation.md) |

@@ -67,12 +67,9 @@ class CommandeEmailTest extends \Drupal\Tests\BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
 
-    // Activer le collecteur de test (emails capturés en mémoire, jamais envoyés)
-    $this->config('symfony_mailer.settings')
-      ->set('test_transport', TRUE)
-      ->save();
-
-    // OU via test_mail_collector (système legacy)
+    // Symfony Mailer s'appuie sur le système mail Drupal : en test, on capture
+    // via le collecteur core test_mail_collector (emails stockés en state,
+    // jamais réellement envoyés). Configurer EN PREMIER dans setUp().
     $this->config('system.mail')
       ->set('interface.default', 'test_mail_collector')
       ->save();

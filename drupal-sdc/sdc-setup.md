@@ -85,6 +85,12 @@ slots:
   footer:
     title: 'Pied de carte'
     description: 'Actions ou informations complémentaires.'
+
+# Librairies — card.css / card.js sont attachés automatiquement.
+# Pour dépendre d'une librairie partagée du thème (ex: tokens design) :
+libraryOverrides:
+  dependencies:
+    - mon_theme/design-tokens
 ```
 
 ---
@@ -249,22 +255,28 @@ slots:
 ```yaml
 # web/sites/default/services.yml (dev)
 parameters:
-  sdc.debug: true    # Activer la validation stricte des props
+  # Valide les props/slots contre le schema JSON du *.component.yml.
+  # Lève une exception explicite si un type ne correspond pas.
+  sdc.enforce_schemas: true
 ```
+
+> **Nom du paramètre :** c'est bien `sdc.enforce_schemas` (core D10.3+), PAS `sdc.debug` qui n'existe pas.
+> En production on le laisse à `false` (défaut) pour ne pas planter le rendu sur une prop invalide.
 
 ```bash
 # Lister tous les composants SDC disponibles
+# Service réel : plugin.manager.sdc (classe ComponentPluginManager)
 drush php:eval "
-\$registry = \Drupal::service('sdc.component_registry');
-foreach (\$registry->getAllComponents() as \$id => \$component) {
+\$manager = \Drupal::service('plugin.manager.sdc');
+foreach (array_keys(\$manager->getDefinitions()) as \$id) {
   echo \$id . PHP_EOL;
 }
 "
 
-# Vérifier la structure d'un composant
+# Vérifier la structure d'un composant (props/slots)
 drush php:eval "
-\$registry = \Drupal::service('sdc.component_registry');
-\$component = \$registry->find('mon_theme:card');
-print_r(\$component->metadata->props);
+\$manager = \Drupal::service('plugin.manager.sdc');
+\$component = \$manager->find('mon_theme:card');
+print_r(\$component->metadata->schema['properties'] ?? []);
 "
 ```

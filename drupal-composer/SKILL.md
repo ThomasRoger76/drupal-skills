@@ -13,6 +13,8 @@ Référentiel complet de la gestion des dépendances Drupal avec Composer 2 : st
 
 > **Composer est la seule source de vérité pour les dépendances.** Jamais de modules téléchargés manuellement, jamais de modifications directes dans `vendor/`. Tout passe par `composer.json` → commit → `composer install` en production.
 
+> **Environnement conteneurisé (Docker natif, jamais DDEV) :** toutes les commandes `composer …` de ce skill s'exécutent dans le container PHP via `docker compose exec php composer …` (ajouter `--user www-data` si les fichiers doivent appartenir à l'utilisateur web). Les commandes sont écrites en `composer …` brut pour la lisibilité — préfixer en conséquence sur un projet dockerisé.
+
 ---
 
 ## Quick Decision Table
@@ -49,6 +51,8 @@ Référentiel complet de la gestion des dépendances Drupal avec Composer 2 : st
 | **Composer normalize (tri cohérent du composer.json)** | `composer-normalize` plugin — `composer normalize` | [composer-basics.md](composer-basics.md) |
 | **Vérifier l'intégrité du vendor après déploiement** | `composer check-platform-reqs` | [deployment.md](deployment.md) |
 | **Rollback d'un package après update cassé** | `composer require drupal/MODULE:^VERSION_PRÉCÉDENTE` + `composer.lock` git checkout | [troubleshooting.md](troubleshooting.md) |
+| **Aligner les contraintes sur l'installé (avant release)** | `composer bump` (Composer 2.4+) | [version-constraints.md](version-constraints.md) |
+| **Patches v2 (format étendu, sha256, lock)** | `cweagans/composer-patches:^2.0` — liste d'objets `{description, url}` | [patches.md](patches.md) |
 
 ## Anti-Patterns Critiques
 

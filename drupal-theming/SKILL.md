@@ -44,6 +44,7 @@ Référentiel complet du theming Drupal 8-11+ : anatomie d'un thème, gestion de
 | Créer un sous-thème Bootstrap 5 | `.info.yml` avec `base theme: bootstrap5` | [bootstrap5.md](bootstrap5.md) |
 | Surcharger des templates Bootstrap5 | Copier dans `templates/` du sous-thème | [bootstrap5.md](bootstrap5.md) |
 | Générer un thème Drupal 11 complet from scratch | Agent `/drupal-generate-theme` | [agents/theme-generator.md](agents/theme-generator.md) |
+| Générer un thème via le starterkit core officiel | `php core/scripts/drupal generate-theme` | [agents/theme-generator.md](agents/theme-generator.md) |
 | Compiler SCSS → CSS (nouveaux projets) | **Vite** (recommandé 2025+) | [build-pipeline.md](build-pipeline.md) |
 | Compiler SCSS → CSS (projets legacy) | Gulp ou Webpack | [build-pipeline.md](build-pipeline.md) |
 | Service Docker Node.js pour le thème | `node:22-alpine` + `npm run watch` | [build-pipeline.md](build-pipeline.md) |
@@ -96,7 +97,7 @@ Référentiel complet du theming Drupal 8-11+ : anatomie d'un thème, gestion de
 ## Auto-Amélioration
 
 - **[lessons.md](lessons.md)** — Bugs trouvés en usage réel. Ajouter une entrée après chaque correction.
-- **[CHANGELOG.md](CHANGELOG.md)** — Historique des versions (v1.0 courante).
+- **[CHANGELOG.md](CHANGELOG.md)** — Historique des versions (v1.3 courante).
 
 ## See Also
 

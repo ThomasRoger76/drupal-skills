@@ -2,6 +2,32 @@
 
 ---
 
+## v1.1 — 2026-06-09
+
+**Audit qualité D11 — mise à niveau des API dépréciées et des attributs de plugins**
+
+### Corrigé
+
+- **`media-programmatic.md`** — `system_retrieve_file()` (déprécié D10.3+) remplacé
+  par `httpClient()->get()` + `file.repository->writeData()`. Suppression du pattern
+  `File::create()` + `setFileUri()` qui ne déplace pas le fichier physique.
+  Détection des médias orphelins corrigée : `file.usage` (faux négatifs systématiques)
+  → `drupal/entity_usage` `listSources()`.
+- **`media-library.md`** — `FileSystemInterface::EXISTS_REPLACE` (déprécié D10.3)
+  → enum `FileExists::Replace` via `file.repository->copy()`. `image_path_flush()`
+  (non public) et `drush image-flush` → `drush image:flush` / `ImageStyle::flush()`.
+- **`media-types.md`** — Annotation `@MediaSource` → attribut PHP `#[MediaSource]`
+  (D10.2+, annotation supprimée D12) avec `new TranslatableMarkup()`.
+- **`media-migration.md`** — Annotation `@MigrateSource` → attribut PHP
+  `#[MigrateSource]` ; import `Row` inutilisé retiré.
+- **`SKILL.md`** — 5 anti-patterns ajoutés (system_retrieve_file, FileExists,
+  attributs PHP, File::create incomplet, file.usage orphelins). Table d'évolution
+  enrichie (FileExists, attributs PHP, system_retrieve_file). Orphelins :
+  `entity_usage` au lieu de `media_entity_file_replace` (rôle erroné).
+- **`lessons.md`** — 4 incidents D11 documentés.
+
+---
+
 ## v1.0 — 2026-05-16
 
 **Création initiale — skill manquant identifié lors de l'audit ultra-critique**
@@ -40,4 +66,5 @@
 
 | Skill version | Drupal | Notes |
 |--------------|--------|-------|
+| v1.1 | D10.2+, D11 | Attributs PHP plugins (D10.2), enum FileExists (D10.3), system_retrieve_file déprécié |
 | v1.0 | D8.6+, D9, D10, D11 | Media core D8.6, Media Library stable D9, file_url_generator D9, WebP D10 |

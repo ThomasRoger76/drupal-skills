@@ -71,13 +71,18 @@ La commande commune à TOUT déploiement Drupal :
 | `drush deploy` sans maintenance mode sur gros sites | Maintenance mode pendant updb sur DB > 1Go | Erreurs pour les visiteurs pendant la migration |
 | Secrets en clair dans composer.json ou .env commité | Variables d'environnement CI/CD ou vault | Fuite de credentials |
 | Pas de post-deploy check | `drush core:requirements --severity=2` | Problèmes silencieux en production |
+| Désactiver le maintenance mode sans `trap` | `trap '...maintenance_mode 0' ERR` dans le script | Site bloqué en maintenance si updb échoue |
+| Déployer sans dump DB préalable | `drush sql:dump --gzip` avant `drush deploy` | Rollback impossible après un updb destructif |
 
 ## Évolution par Version Majeure
 
 | Feature | D8 | D9 | D10 | D11 |
 |---------|----|----|-----|-----|
 | `drush deploy` | ❌ | ✅ Drush 10+ | ✅ | ✅ |
-| `hook_deploy_N` | ❌ | ✅ D9.3+ | ✅ | ✅ |
+| `hook_deploy_N` (numéroté) | ❌ | ✅ D9.3+ | ✅ | ✅ |
+| `hook_deploy_NAME` (nommé, `MODULE.deploy.php`) | ❌ | ❌ | ✅ Drush 11+ | ✅ |
+| PHP minimum | 7.x | 7.3 | 8.1 | **8.3** |
+| DB minimum | MySQL 5.7 | MySQL 5.7 | MariaDB 10.3 | **MySQL 8.0 / MariaDB 10.6** |
 | Platform.sh support | ✅ | ✅ | ✅ | ✅ |
 | Pantheon Terminus | ✅ | ✅ | ✅ | ✅ |
 | Acquia CLI (acli) | ❌ | ✅ | ✅ | ✅ |

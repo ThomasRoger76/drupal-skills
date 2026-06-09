@@ -21,15 +21,24 @@ description: Intégration Elasticsearch / OpenSearch avec Search API Drupal - co
 
 ## Installation
 
+Deux modules **concurrents** (jamais ensemble — choisir l'un OU l'autre) :
+
+| Module | Backend Search API | Notes |
+|--------|--------------------|-------|
+| `drupal/elasticsearch_connector` | `elasticsearch` (8.x réécrit pour ES 7/8 + OpenSearch) | Le plus utilisé, supporte ES et OpenSearch via la même API |
+| `drupal/search_api_opensearch` | `opensearch` | Fork orienté AWS OpenSearch, maintenu activement |
+
 ```bash
-# Module Search API Elasticsearch
+# Option A — Elasticsearch Connector (Elasticsearch OU OpenSearch)
 composer require drupal/elasticsearch_connector
+drush en elasticsearch_connector -y
 
-# OU module plus récent (maintenu activement)
-composer require drupal/search_api_elasticsearch
-
-drush en elasticsearch_connector search_api_elasticsearch -y
+# Option B — Search API OpenSearch (AWS OpenSearch)
+composer require drupal/search_api_opensearch
+drush en search_api_opensearch -y
 ```
+
+> Ne pas activer les deux : ils fournissent des backends distincts et entrent en conflit sur le mapping des champs.
 
 ---
 
@@ -75,20 +84,8 @@ volumes:
 
 ## Configuration du Serveur
 
-```yaml
-# config/install/elasticsearch_connector.cluster.drupal.yml
-langcode: fr
-status: true
-id: drupal
-name: 'Drupal Elasticsearch'
-url: 'http://elasticsearch:9200'   # URL du service Docker
-options:
-  multiple_nodes_connection: 0
-  use_authentication: 0
-  username: ''
-  password: ''
-  ssl_verification: 1
-```
+`elasticsearch_connector` 8.x ne définit plus d'entité « cluster » séparée :
+la connexion est portée directement par le serveur Search API.
 
 ```yaml
 # config/install/search_api.server.elasticsearch_server.yml
@@ -99,14 +96,21 @@ name: 'Elasticsearch Server'
 description: ''
 backend: elasticsearch
 backend_config:
-  connector: 'elasticsearch'
+  connector: standard
   connector_config:
-    cluster_id: drupal              # ID du cluster configuré ci-dessus
-  fuzziness: 'auto'                 # Recherche approximative
-  retrieve_data: false
-  highlight_data: false
-  excerpt: false
+    url: 'http://elasticsearch:9200'   # URL du service Docker
+    enable_debug_logging: false
+    username: ''                       # Auth (xpack security) si activée
+    password: ''
+  fuzziness: 'auto'                    # Recherche approximative (tolérance fautes)
+  advanced:
+    prefix: ''
+    suffix: ''
 ```
+
+> Pour OpenSearch via `drupal/search_api_opensearch`, le backend devient
+> `opensearch` et la clé `connector_config.url` pointe vers le endpoint OpenSearch
+> (avec auth IAM/basic selon le déploiement AWS).
 
 ---
 
@@ -171,7 +175,7 @@ docker compose logs elasticsearch | grep -E "error|ERROR" | tail -20
 ## Limitations vs Solr avec Drupal
 
 ```
-❌ Pas de génération de schéma automatique (drush solr-gsc n'existe pas pour ES)
+❌ Pas de génération de schéma à déployer (search-api-solr:generate-solr-config n'a pas d'équivalent ES — le mapping est créé à la volée)
 ❌ Module moins testé en production Drupal
 ❌ Multilingue : pas d'analyseurs par langue aussi bien intégrés qu'avec Solr
 ❌ Highlighting : support variable selon le module utilisé

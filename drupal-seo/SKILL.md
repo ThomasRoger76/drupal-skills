@@ -9,6 +9,8 @@ description: Use when configuring SEO on Drupal sites with the Metatag module (m
 
 Référentiel complet du SEO Drupal 8-11+ : Metatag (meta tags, Open Graph, Twitter Cards, Schema.org), Simple Sitemap (XML sitemap), Pathauto (URL aliases), Redirect (301/302), données structurées JSON-LD, hreflang multilingue, et checklist SEO production.
 
+> **Convention d'exécution.** Les commandes `drush`, `composer` et `curl` de ce skill s'exécutent en **Docker natif** : préfixer par `docker compose exec php` (ex. `docker compose exec php drush ssg`). **Jamais `ddev`.** Les exemples sont écrits en `drush` brut pour la lisibilité — préfixer systématiquement en environnement conteneurisé.
+
 ## 🎯 La Règle Fondamentale
 
 > **SEO en couches.** Metatag gère le `<head>`, Pathauto gère les URLs, Simple Sitemap gère la découverte, Schema.org gère la compréhension. Ces quatre couches sont indépendantes et complémentaires — toutes sont nécessaires pour un SEO complet.
@@ -43,15 +45,15 @@ Référentiel complet du SEO Drupal 8-11+ : Metatag (meta tags, Open Graph, Twit
 | Schema.org Product (e-commerce) | `drupal/metatag` ou JSON-LD custom | [structured-data.md](structured-data.md) |
 | hreflang pour le SEO multilingue | Metatag hreflang group | [metatag.md](metatag.md) |
 | Prévenir le contenu dupliqué (pagination) | Canonical + rel="next/prev" | [metatag.md](metatag.md) |
-| Audit SEO complet | Agent `/drupal-seo-audit` | [agents/seo-audit.md](agents/seo-audit.md) |
+| Audit SEO générique (scores, recommandations) | Skill `seo-audit` (hors Drupal) | voir « Complémentarité » plus bas |
 | Vérifier les meta tags en développement | Module `metatag_extended_perms` + DevTools | [metatag.md](metatag.md) |
 | **Analytics : Google Analytics (GA4)** | `drupal/google_analytics` ou `drupal/google_tag` (GTM) | [analytics.md](analytics.md) |
 | **Analytics : Matomo (auto-hébergé)** | `drupal/matomo` — sans tiers, RGPD natif | [analytics.md](analytics.md) |
 | **Cookie consent RGPD** | `drupal/tarte_au_citron` (FR) ou `drupal/cookieyes` | [analytics.md](analytics.md) |
 | Bloquer analytics avant consentement | Tarte au Citron → services Google/Matomo gérés | [analytics.md](analytics.md) |
-| **Core Web Vitals : LCP > 2.5s** | BigPipe + images lazy loading + `fetchpriority="high"` sur hero image | [sitemap.md](sitemap.md) |
-| **Core Web Vitals : CLS (layout shift)** | Dimensions `width`/`height` sur toutes les images, `font-display: swap` | [sitemap.md](sitemap.md) |
-| **Core Web Vitals : INP > 200ms** | Réduire JS bloquant, `once()` correct, différer les scripts non critiques | [sitemap.md](sitemap.md) |
+| **Core Web Vitals : LCP > 2.5s** | BigPipe + images lazy loading + `fetchpriority="high"` sur hero image | skill `drupal-performance` |
+| **Core Web Vitals : CLS (layout shift)** | Dimensions `width`/`height` sur toutes les images, `font-display: swap` | skill `drupal-performance` |
+| **Core Web Vitals : INP > 200ms** | Réduire JS bloquant, `once()` correct, différer les scripts non critiques | skill `drupal-performance` |
 | **Liens internes contextuels dans CKEditor** | Module `drupal/linkit` — autocomplete vers les entités Drupal dans l'éditeur | [pathauto.md](pathauto.md) |
 | **Nommage des fichiers image pour le SEO** | Pathauto sur les file entities, ou convention `[site:name]-[node:title]-[file:fid].webp` | [pathauto.md](pathauto.md) |
 | **Alt text obligatoire sur toutes les images** | Champ `alt` requis sur Image fields + audit via `drupal/editoria11y` | [metatag.md](metatag.md) |

@@ -106,9 +106,16 @@ Pour personnaliser quels champs vont en sidebar :
 ```
 
 ```php
-// Déplacer des champs en sidebar via hook_form_alter
-function mon_admin_theme_form_node_article_edit_form_alter(array &$form, $form_state): void {
-  // Déplacer le champ SEO dans le panneau méta
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node_article_edit_form.
+ *
+ * Le panneau latéral Gin est le groupe '#group' => 'meta'.
+ * À placer dans mon_admin_theme.theme (les *_form_alter d'un thème ne
+ * s'exécutent que lorsque ce thème est actif — idéal pour l'admin).
+ */
+function mon_admin_theme_form_node_article_edit_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
   if (isset($form['field_seo_title'])) {
     $form['field_seo_title']['#group'] = 'meta';
   }

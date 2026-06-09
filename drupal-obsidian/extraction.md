@@ -110,7 +110,7 @@ def extract_content_types(config_dir: str, vault_dir: str, all_fields: dict, all
             f for f in all_fields.values()
             if f.get('entity_type') == 'node' and f.get('bundle') == bundle
         ]
-        fields_table = _build_fields_table(bundle_fields, all_fields)
+        fields_table = _build_fields_table(bundle_fields, all_storages)
 
         # Nom de template Twig (tirets, convention unifiée)
         twig_base = drupal_id_to_twig_filename(bundle)
@@ -121,6 +121,7 @@ bundle: {bundle}
 drupal_type: node
 label: "{label_safe}"
 machine_name: {bundle}
+fields: {len(bundle_fields)}
 tags: [entity, node, content-type]
 created: {datetime.now().strftime('%Y-%m-%d')}
 ---
@@ -185,7 +186,7 @@ def extract_paragraphs(config_dir: str, vault_dir: str, all_fields: dict, all_st
             f for f in all_fields.values()
             if f.get('entity_type') == 'paragraph' and f.get('bundle') == bundle
         ]
-        fields_table = _build_fields_table(bundle_fields, all_fields)
+        fields_table = _build_fields_table(bundle_fields, all_storages)
         twig_base = drupal_id_to_twig_filename(bundle)
 
         note = f"""---
@@ -194,6 +195,7 @@ bundle: {bundle}
 drupal_type: paragraph
 label: "{label_safe}"
 machine_name: {bundle}
+fields: {len(bundle_fields)}
 tags: [entity, paragraph]
 created: {datetime.now().strftime('%Y-%m-%d')}
 ---
@@ -333,6 +335,7 @@ bundle: {vid}
 drupal_type: taxonomy_term
 label: "{label_safe}"
 machine_name: {vid}
+fields: {len(bundle_fields)}
 tags: [entity, taxonomy]
 created: {datetime.now().strftime('%Y-%m-%d')}
 ---
@@ -344,7 +347,7 @@ created: {datetime.now().strftime('%Y-%m-%d')}
 - **Description :** {desc}
 
 ## Champs du terme
-{_build_fields_table(bundle_fields, all_fields)}
+{_build_fields_table(bundle_fields, all_storages)}
 
 ## Entités qui référencent ce vocabulaire
 > Compléter avec les champs `entity_reference` pointant vers `{vid}`
@@ -493,6 +496,153 @@ created: {datetime.now().strftime('%Y-%m-%d')}
     return count
 
 
+# ─── WORKFLOWS (Content Moderation) ───────────────────────────────────────────
+
+def extract_workflows(config_dir: str, vault_dir: str) -> int:
+    """Génère une note par workflow editorial (workflows.workflow.*).
+
+    États et transitions sont sous `type_settings` (PAS à la racine du YAML).
+    Les bundles concernés sont dans `type_settings.entity_types.<entity>: [bundles]`.
+    """
+    count = 0
+    out_dir = Path(vault_dir) / "Workflows"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for yml_file in glob.glob(f"{config_dir}/workflows.workflow.*.yml"):
+        data = load_yaml(yml_file)
+        if not data:
+            continue
+
+        wf_id = data.get('id', bundle_from_filename(yml_file))
+        label = data.get('label', wf_id)
+        ts = data.get('type_settings', {})
+        states = ts.get('states', {})
+        transitions = ts.get('transitions', {})
+        entity_types = ts.get('entity_types', {})
+
+        state_lines = "\n".join([
+            f"| `{sid}` | {s.get('label', sid)} | {s.get('published', False)} | {s.get('default_revision', False)} |"
+            for sid, s in sorted(states.items(), key=lambda x: x[1].get('weight', 0))
+        ]) or "_Aucun état._"
+
+        trans_lines = "\n".join([
+            f"| `{tid}` | {t.get('label', tid)} | {', '.join(t.get('from', []))} | {t.get('to', '')} |"
+            for tid, t in transitions.items()
+        ]) or "_Aucune transition._"
+
+        # Wikilinks vers les bundles soumis au workflow
+        bundle_links = "\n".join([
+            f"- [[{bundle}]] (`{etype}`)"
+            for etype, bundles in entity_types.items()
+            for bundle in bundles
+        ]) or "_Aucun bundle associé._"
+
+        note = f"""---
+type: workflow
+workflow_id: {wf_id}
+label: "{safe_yaml_str(label)}"
+workflow_type: {data.get('type', '')}
+states: [{', '.join(states.keys())}]
+tags: [workflow]
+created: {datetime.now().strftime('%Y-%m-%d')}
+---
+
+# Workflow : {label}
+
+## Métadonnées
+- **Machine name :** `{wf_id}`
+- **Type :** `{data.get('type', '')}`
+
+## États
+| État | Label | Publié | Révision par défaut |
+|------|-------|--------|---------------------|
+{state_lines}
+
+## Transitions
+| Transition | Label | De | Vers |
+|------------|-------|----|----|
+{trans_lines}
+
+## Bundles soumis à ce workflow
+{bundle_links}
+"""
+        (out_dir / f"{wf_id}.md").write_text(note, encoding='utf-8')
+        count += 1
+        print(f"  ✅ Workflow: {wf_id}")
+
+    return count
+
+
+# ─── MIGRATIONS ───────────────────────────────────────────────────────────────
+
+def extract_migrations(config_dir: str, vault_dir: str) -> int:
+    """Génère une note par migration.
+
+    Couvre les migrations stockées en config (migrate_plus.migration.*).
+    Les migrations en code (`migrations/*.yml` d'un module) ne sont PAS dans
+    config/sync — passer le répertoire du module en `config_dir` pour les capter.
+    """
+    count = 0
+    out_dir = Path(vault_dir) / "Migrations"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    patterns = [
+        f"{config_dir}/migrate_plus.migration.*.yml",
+        f"{config_dir}/migrate_plus.migration_group.*.yml",
+    ]
+    for yml_file in [p for pat in patterns for p in glob.glob(pat)]:
+        data = load_yaml(yml_file)
+        if not data:
+            continue
+
+        mig_id = data.get('id', bundle_from_filename(yml_file))
+        label = data.get('label', mig_id)
+        source = data.get('source', {})
+        destination = data.get('destination', {})
+        deps = data.get('migration_dependencies', {}).get('required', [])
+
+        dest_plugin = destination.get('plugin', '')
+        dest_bundle = destination.get('default_bundle', '')
+        bundle_link = f"[[{dest_bundle}]]" if dest_bundle else "_(non précisé)_"
+
+        dep_lines = "\n".join([f"- [[{d}]]" for d in deps]) or "_Aucune._"
+
+        note = f"""---
+type: migration
+migration_id: {mig_id}
+label: "{safe_yaml_str(label)}"
+source_plugin: {source.get('plugin', '')}
+destination_plugin: {dest_plugin}
+bundle: {dest_bundle}
+documented: true
+tags: [migration]
+created: {datetime.now().strftime('%Y-%m-%d')}
+---
+
+# Migration : {label}
+
+## Métadonnées
+- **ID :** `{mig_id}`
+- **Source :** `{source.get('plugin', '')}`
+- **Destination :** `{dest_plugin}` → bundle {bundle_link}
+
+## Dépendances (doivent tourner avant)
+{dep_lines}
+
+## Commandes
+```bash
+docker compose exec php drush migrate:import {mig_id}
+docker compose exec php drush migrate:status {mig_id}
+docker compose exec php drush migrate:rollback {mig_id}
+```
+"""
+        (out_dir / f"{mig_id}.md").write_text(note, encoding='utf-8')
+        count += 1
+        print(f"  ✅ Migration: {mig_id}")
+
+    return count
+
+
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 def _build_fields_table(fields: list, all_storages: dict = None) -> str:
@@ -570,6 +720,14 @@ def main():
 
     print("🖥️  Extraction des modes d'affichage (entity_view_display)...")
     n = extract_view_displays(args.config, args.vault)
+    print(f"   → {n} notes créées\n")
+
+    print("🔁 Extraction des Workflows...")
+    n = extract_workflows(args.config, args.vault)
+    print(f"   → {n} notes créées\n")
+
+    print("📥 Extraction des Migrations...")
+    n = extract_migrations(args.config, args.vault)
     print(f"   → {n} notes créées\n")
 
     print("✅ Extraction terminée ! Ouvrir le vault dans Obsidian.")
@@ -713,10 +871,14 @@ def detect_entity_type(filename: str, content: dict) -> str:
         return 'menu'
     elif filename.startswith('core.entity_view_display.'):
         return 'view_display'
-    elif filename.startswith('sdc.component.'):
-        return 'sdc_component'
     else:
         return 'config'  # Config générique — ne pas extraire
+
+# NOTE : les SDC Components ne sont PAS dans config/sync. Ils sont définis par des
+# fichiers `*.component.yml` dans le thème (`themes/.../components/<name>/<name>.component.yml`).
+# Idem pour les Recipes (`recipe.yml` à la racine du paquet recipe) et, le plus souvent,
+# les migrations en code (`migrations/*.yml` d'un module). Pour les cartographier, scanner
+# ces répertoires séparément — voir extract_sdc_components() ci-dessous.
 
 
 def extract_fields_from_yaml(config_dir: str) -> dict:

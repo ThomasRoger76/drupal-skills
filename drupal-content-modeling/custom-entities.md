@@ -62,42 +62,48 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 
+// ── D11 (recommandé) — Attribut PHP, voie par défaut en Drupal 11 ──────────
+// Décommenter ce bloc et l'ajouter juste avant `class Commande` (les attributs
+// PHP, contrairement aux annotations, ne vivent PAS dans un docblock /** */).
+// Ajouter les `use` requis en haut du fichier :
+//   use Drupal\Core\Entity\Attribute\ContentEntityType;
+//   use Drupal\Core\StringTranslation\TranslatableMarkup;
+/*
+#[ContentEntityType(
+  id: 'commande',
+  label: new TranslatableMarkup('Commande'),
+  label_collection: new TranslatableMarkup('Commandes'),
+  handlers: [
+    'access' => 'Drupal\mon_module\Entity\CommandeAccessControlHandler',
+    'list_builder' => 'Drupal\mon_module\Entity\CommandeListBuilder',
+    'form' => [
+      'default' => 'Drupal\mon_module\Entity\Form\CommandeForm',
+      'delete' => 'Drupal\mon_module\Entity\Form\CommandeDeleteForm',
+    ],
+    'route_provider' => [
+      'html' => 'Drupal\Core\Entity\Routing\AdminHtmlRouteProvider',
+    ],
+  ],
+  base_table: 'commande',
+  data_table: 'commande_field_data',
+  translatable: true,
+  admin_permission: 'administer commandes',
+  entity_keys: [
+    'id' => 'id', 'uuid' => 'uuid', 'langcode' => 'langcode', 'label' => 'reference',
+  ],
+  links: [
+    'canonical' => '/admin/commandes/{commande}',
+    'add-form' => '/admin/commandes/add',
+    'edit-form' => '/admin/commandes/{commande}/edit',
+    'delete-form' => '/admin/commandes/{commande}/delete',
+    'collection' => '/admin/commandes',
+  ],
+)]
+*/
+
+// ── D8-D10 (legacy) — Annotation dans le docblock juste avant la classe ────
+// En D11 l'annotation reste tolérée, mais l'attribut PHP ci-dessus est préféré.
 /**
- * Entité Commande.
- *
- * D11+ — Remplacer l'annotation @ContentEntityType par un PHP Attribute :
- *
- * #[ContentEntityType(
- *   id: 'commande',
- *   label: new TranslatableMarkup('Commande'),
- *   label_collection: new TranslatableMarkup('Commandes'),
- *   handlers: [
- *     'access' => 'Drupal\mon_module\Entity\CommandeAccessControlHandler',
- *     'list_builder' => 'Drupal\mon_module\Entity\CommandeListBuilder',
- *     'form' => [
- *       'default' => 'Drupal\mon_module\Entity\Form\CommandeForm',
- *       'delete' => 'Drupal\mon_module\Entity\Form\CommandeDeleteForm',
- *     ],
- *     'route_provider' => [
- *       'html' => 'Drupal\Core\Entity\Routing\AdminHtmlRouteProvider',
- *     ],
- *   ],
- *   base_table: 'commande',
- *   translatable: true,
- *   admin_permission: 'administer commandes',
- *   entity_keys: [
- *     'id' => 'id', 'uuid' => 'uuid', 'langcode' => 'langcode', 'label' => 'reference',
- *   ],
- *   links: [
- *     'canonical' => '/admin/commandes/{commande}',
- *     'add-form' => '/admin/commandes/add',
- *     'edit-form' => '/admin/commandes/{commande}/edit',
- *     'delete-form' => '/admin/commandes/{commande}/delete',
- *     'collection' => '/admin/commandes',
- *   ],
- * )]
- *
- * D8-D10 — Garder l'annotation @ContentEntityType ci-dessous.
  * @ContentEntityType(
  *   id = "commande",
  *   label = @Translation("Commande"),
@@ -140,7 +146,8 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   },
  * )
  */
-// D11 : utiliser #[ContentEntityType(...)] attribute PHP
+// ⚠️ Choisir UNE seule des deux déclarations ci-dessus (attribut D11 OU
+// annotation D8-D10), jamais les deux simultanément.
 
 class Commande extends ContentEntityBase implements ContentEntityInterface {
 
@@ -156,10 +163,7 @@ class Commande extends ContentEntityBase implements ContentEntityInterface {
       ->setDescription(t('Numéro de référence de la commande.'))
       ->setRequired(TRUE)
       ->setTranslatable(FALSE)      // ← Même référence dans toutes les langues
-      ->setSettings([
-        'max_length' => 64,
-        'text_processing' => 0,
-      ])
+      ->setSetting('max_length', 64)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',

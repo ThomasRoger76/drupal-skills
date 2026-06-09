@@ -105,3 +105,25 @@ Après chaque bug de test résolu :
 - **Cause :** Logique de validation PHP pure dans des classes sans aucun Unit Test
 - **Correct :** Les classes de validation et les DTOs sont parfaits pour les Unit Tests — aucune dépendance Drupal nécessaire
 - **Prévention :** Toute classe avec des conditions `if/else` sur des données métier doit avoir des tests avec DataProvider couvrant : valeurs valides, invalides, nulles, cas limites
+
+---
+
+## 2026-06-09 — Audit qualité v1.2
+
+### `phpunit.xml` PHPUnit 9 vs PHPUnit 10/11 — schéma cassé en D11
+- **Symptôme :** `phpunit.xml` rejeté ou attributs ignorés : `printerClass`, `verbose`, `<coverage><include>` ne sont plus reconnus
+- **Cause :** PHPUnit 10 (D10) et 11 (D11) ont supprimé `printerClass`, `verbose`, `forceCoversAnnotation`, et déplacé `<include>/<exclude>` de `<coverage>` vers `<source>`
+- **Correct :** `printerClass` → `<extensions><bootstrap class="Drupal\TestTools\Extension\HtmlLogging\HtmlOutputLogger">` ; `verbose="true"` → `displayDetailsOnTestsThatTriggerWarnings="true"` ; `forceCoversAnnotation` → `requireCoverageMetadata="true"` ; couverture dans `<source>`, rapports dans `<coverage><report>`
+- **Prévention :** Sur D11, partir du `core/phpunit.xml.dist` de la version Drupal cible — ne pas recopier un `phpunit.xml` PHPUnit 9
+
+### `docker compose exec php` dans un job CI — commande introuvable
+- **Symptôme :** `docker: command not found` (ou socket Docker absent) dans un job GitLab/GitHub qui tourne dans l'image PHP
+- **Cause :** `docker compose exec php …` sert à entrer dans le container EN LOCAL ; en CI, le job s'exécute DÉJÀ à l'intérieur du container
+- **Correct :** En CI, appeler directement `vendor/bin/phpunit` / `vendor/bin/phpcs` / `vendor/bin/infection`
+- **Prévention :** `docker compose exec` = poste local uniquement. Dans un `.gitlab-ci.yml` / workflow GitHub avec `image:`, jamais de `docker compose exec`
+
+### ChromeDriver/Selenium avec Docker Compose — pas de `docker compose exec restart`
+- **Symptôme :** `Connection refused to ChromeDriver` ; commandes type `docker compose exec php restart` qui ne veulent rien dire
+- **Cause :** Selenium est un service à part dans `docker-compose.yml`, pas une extension du container PHP
+- **Correct :** Déclarer un service `selenium: image: selenium/standalone-chrome` puis `docker compose up -d selenium`
+- **Prévention :** Pointer `MINK_DRIVER_ARGS_WEBDRIVER` vers `http://selenium:4444/wd/hub` et démarrer le service séparément
