@@ -99,3 +99,5 @@ web/themes/custom/mon_theme/components/
 - `drupal-theming` — Twig templates, libraries, build pipeline Vite
 - `drupal-core` — Plugin Block, hook_theme, render arrays
 - `drupal-content-modeling` — Layout Builder avec composants SDC
+- `drupal-layout-builder` — section « Experience Builder » : XB utilise les SDC comme briques de
+  base — tout composant SDC écrit aujourd'hui est un investissement directement réutilisable dans XB
